@@ -1054,11 +1054,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- SUBTAB 2: MEMBANDINGKAN BILANGAN ENGINE ---
     function renderCompareModule() {
         if (!dom.compareNumA || !dom.compareNumB) return;
-        const rawA = dom.compareNumA.value.replace(/\D/g, '') || '0';
-        const rawB = dom.compareNumB.value.replace(/\D/g, '') || '0';
+        const rawAClean = dom.compareNumA.value.replace(/\D/g, '');
+        const rawBClean = dom.compareNumB.value.replace(/\D/g, '');
 
-        dom.compareNumA.value = formatDots(rawA);
-        dom.compareNumB.value = formatDots(rawB);
+        if (rawAClean === '') dom.compareNumA.value = '';
+        else dom.compareNumA.value = formatDots(rawAClean);
+
+        if (rawBClean === '') dom.compareNumB.value = '';
+        else dom.compareNumB.value = formatDots(rawBClean);
+
+        const rawA = rawAClean || '0';
+        const rawB = rawBClean || '0';
 
         const valA = BigInt(rawA);
         const valB = BigInt(rawB);
@@ -1148,14 +1154,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const items = [];
         dom.sortNumInputs.forEach((input, idx) => {
-            const raw = input.value.replace(/\D/g, '') || '0';
-            input.value = formatDots(raw);
+            const rawClean = input.value.replace(/\D/g, '');
+            if (rawClean === '') {
+                input.value = '';
+            } else {
+                input.value = formatDots(rawClean);
+            }
+
+            const raw = rawClean || '0';
             items.push({
                 origIdx: idx + 1,
                 raw: raw,
                 val: BigInt(raw),
-                formatted: formatDots(raw),
-                words: terbilangTextPlain(raw)
+                formatted: rawClean === '' ? '0' : formatDots(rawClean),
+                words: rawClean === '' ? 'Nol' : terbilangTextPlain(rawClean)
             });
         });
 
@@ -1172,28 +1184,57 @@ document.addEventListener('DOMContentLoaded', () => {
                 : '🏆 HASIL URUTAN DARI TERBESAR KE TERKECIL (TURUN ↘️):';
         }
 
+        const cardColors = [
+            { bg: '#fef9c3', border: '#eab308', badgeBg: '#fde047', icon: '🥇' }, // Rank 1 Gold
+            { bg: '#e0f2fe', border: '#0284c7', badgeBg: '#7dd3fc', icon: '🥈' }, // Rank 2 Sky
+            { bg: '#dcfce7', border: '#16a34a', badgeBg: '#86efac', icon: '🥉' }, // Rank 3 Emerald
+            { bg: '#fae8ff', border: '#c026d3', badgeBg: '#f0abfc', icon: '🏅' }  // Rank 4 Purple
+        ];
+
         if (dom.sortedCardsContainer) {
             let html = '';
             items.forEach((item, rankIdx) => {
+                const theme = cardColors[rankIdx % cardColors.length];
                 html += `
-                    <div class="sorted-card-item">
-                        <span class="rank-badge">Urutan #${rankIdx + 1}</span>
-                        <span class="sorted-val-disp">${item.formatted}</span>
-                        <span class="sorted-words-sm">${item.words}</span>
+                    <div class="sorted-card-item rank-card-${rankIdx + 1}" style="background:${theme.bg}; border:2.5px solid var(--neo-black); box-shadow:4px 4px 0px #0f172a; padding:12px; border-radius:12px; min-width:180px; flex:1;">
+                        <div class="rank-header-bar" style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--neo-black); padding-bottom:6px; margin-bottom:8px;">
+                            <span class="rank-badge-colored" style="background:${theme.badgeBg}; color:var(--neo-black); border:1.5px solid var(--neo-black); font-weight:900; padding:3px 10px; border-radius:6px; font-size:0.8rem;">
+                                ${theme.icon} Urutan #${rankIdx + 1}
+                            </span>
+                            <span style="font-size:0.75rem; font-weight:800; color:#475569;">(Bilangan ${item.origIdx})</span>
+                        </div>
+                        <div style="font-size:1.35rem; font-weight:900; color:var(--neo-black); margin-bottom:4px;">${item.formatted}</div>
+                        <div style="font-size:0.8rem; font-weight:700; color:#334155; font-style:italic;">"${item.words}"</div>
                     </div>
                 `;
                 if (rankIdx < items.length - 1) {
-                    html += `<div class="sort-arrow">➔</div>`;
+                    html += `<div class="sort-arrow" style="font-size:1.8rem; font-weight:900; align-self:center; color:var(--neo-black);">➔</div>`;
                 }
             });
             dom.sortedCardsContainer.innerHTML = html;
         }
 
         if (dom.sortAnalysisSteps) {
-            const stepsHtml = items.map((item, rankIdx) => 
-                `<div class="reason-step-item">Urutan #${rankIdx + 1}: <strong>${item.formatted}</strong> (${item.raw.length} Digit - ${item.words})</div>`
-            ).join('');
-            dom.sortAnalysisSteps.innerHTML = `<div class="reasoning-steps-list"><span class="preset-label">📊 Rincian Urutan:</span>${stepsHtml}</div>`;
+            const stepsHtml = items.map((item, rankIdx) => {
+                const theme = cardColors[rankIdx % cardColors.length];
+                return `
+                    <div class="reason-step-item" style="border-left:6px solid ${theme.border}; background:var(--neo-white); margin-bottom:8px; padding:10px 14px; border-radius:8px; border-top:1px solid #cbd5e1; border-right:1px solid #cbd5e1; border-bottom:1px solid #cbd5e1; box-shadow:2px 2px 0px rgba(0,0,0,0.05);">
+                        <span style="background:${theme.badgeBg}; color:var(--neo-black); font-weight:900; padding:3px 8px; border-radius:6px; border:1px solid var(--neo-black); font-size:0.75rem;">
+                            ${theme.icon} Urutan #${rankIdx + 1}
+                        </span>
+                        <strong style="margin-left:8px; font-size:1.1rem; color:var(--neo-black);">${item.formatted}</strong> 
+                        <span style="color:#64748b; font-size:0.82rem; font-weight:700; margin-left:4px;">(Dari Input Bilangan ${item.origIdx} - ${item.raw.length} Digit)</span>
+                        <div style="font-size:0.85rem; color:#334155; margin-top:4px; font-weight:700;">📖 Terbilang: <em>"${item.words}"</em></div>
+                    </div>
+                `;
+            }).join('');
+
+            dom.sortAnalysisSteps.innerHTML = `
+                <div class="reasoning-steps-list">
+                    <span class="preset-label" style="display:block; margin-bottom:10px; font-weight:900; font-size:0.95rem; color:var(--neo-black);">📊 KETERANGAN PENJELASAN URUTAN (WARNA SAMA DENGAN KARTU):</span>
+                    ${stepsHtml}
+                </div>
+            `;
         }
     }
 
