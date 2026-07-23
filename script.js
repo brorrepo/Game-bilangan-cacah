@@ -685,7 +685,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     AudioEngine.play('drag');
                     question.selectedOp = op;
                     renderPlayerSingleSoal(pKey, question);
-                    checkPlayerAnswer(pKey, true);
                 };
             });
         } else if (question.category === 'mengurutkan') {
@@ -761,9 +760,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             AudioEngine.play('drag');
                             question.targetSlots.push(numStr);
                             renderPlayerSingleSoal(pKey, question);
-                            if (question.targetSlots.length === 3) {
-                                checkPlayerAnswer(pKey, true);
-                            }
                         }
                     };
 
@@ -783,14 +779,9 @@ document.addEventListener('DOMContentLoaded', () => {
         targetSlot.status = 'neutral';
 
         renderPlayerSingleSoal(pKey, question);
-
-        const allFilled = question.targetSlots.every(s => s.filled);
-        if (allFilled && !question.isComplete) {
-            checkPlayerAnswer(pKey, true);
-        }
     }
 
-    function checkPlayerAnswer(pKey, isAutoCheck = false) {
+    function checkPlayerAnswer(pKey) {
         const question = pKey === 'p1' ? state.p1Question : state.p2Question;
         const feedbackEl = pKey === 'p1' ? dom.p1Feedback : dom.p2Feedback;
 
@@ -801,11 +792,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (question.category === 'nilai_tempat') {
             const unfilled = question.targetSlots.some(s => !s.filled);
             if (unfilled) {
-                if (!isAutoCheck) {
-                    AudioEngine.play('wrong');
-                    feedbackEl.textContent = '❌ Isilah semua kotak nilai tempat terlebih dahulu!';
-                    feedbackEl.className = 'feedback-msg wrong';
-                }
+                AudioEngine.play('wrong');
+                feedbackEl.textContent = '❌ Isilah semua kotak nilai tempat terlebih dahulu!';
+                feedbackEl.className = 'feedback-msg wrong';
                 return;
             }
 
@@ -822,21 +811,17 @@ document.addEventListener('DOMContentLoaded', () => {
             isAllCorrect = (correctCount === question.targetSlots.length);
         } else if (question.category === 'membandingkan') {
             if (!question.selectedOp) {
-                if (!isAutoCheck) {
-                    AudioEngine.play('wrong');
-                    feedbackEl.textContent = '⚠️ Pilih operator (> , < , =) terlebih dahulu!';
-                    feedbackEl.className = 'feedback-msg wrong';
-                }
+                AudioEngine.play('wrong');
+                feedbackEl.textContent = '⚠️ Pilih operator (> , < , =) terlebih dahulu!';
+                feedbackEl.className = 'feedback-msg wrong';
                 return;
             }
             isAllCorrect = (question.selectedOp === question.expectedOp);
         } else if (question.category === 'mengurutkan') {
             if (question.targetSlots.length < 3) {
-                if (!isAutoCheck) {
-                    AudioEngine.play('wrong');
-                    feedbackEl.textContent = '⚠️ Susun ketiga bilangan ke dalam urutan #1, #2, dan #3!';
-                    feedbackEl.className = 'feedback-msg wrong';
-                }
+                AudioEngine.play('wrong');
+                feedbackEl.textContent = '⚠️ Susun ketiga bilangan ke dalam urutan #1, #2, dan #3!';
+                feedbackEl.className = 'feedback-msg wrong';
                 return;
             }
             isAllCorrect = question.targetSlots.every((val, idx) => val === question.expectedSorted[idx]);
@@ -868,7 +853,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     state.p2Question = buildPlayerQuestionFromSeq('p2', state.p2CurrentRound - 1);
                 }
 
-                feedbackEl.textContent = `🔥 BENAR! +${roundPoin} POIN! Lanjut ke RONDE ${currentRound + 1}...`;
+                feedbackEl.textContent = `🔥 BENAR! +${roundPoin} POIN! Otomatis lanjut ke RONDE ${currentRound + 1}...`;
                 feedbackEl.className = 'feedback-msg correct';
 
                 setTimeout(() => {
@@ -886,7 +871,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else {
             AudioEngine.play('wrong');
-            feedbackEl.textContent = '❌ Jawaban belum tepat, coba ganti pilihanmu!';
+            feedbackEl.textContent = '❌ Jawaban belum tepat, coba perbaiki pilihanmu!';
             feedbackEl.className = 'feedback-msg wrong';
         }
     }
