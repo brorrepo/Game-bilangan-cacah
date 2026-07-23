@@ -1541,7 +1541,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (placedVal) {
                     slotsHtml += `
-                        <div class="vertical-sort-slot filled" data-slot-idx="${i}" title="Klik untuk mengembalikan ke pilihan">
+                        <div class="vertical-sort-slot filled" data-slot-idx="${i}" title="Seret atau Klik untuk mengembalikan ke pilihan">
                             <span class="slot-rank-badge">Urutan ${rankText}</span>
                             <span class="slot-value-text">${placedVal}</span>
                             <span style="font-size:0.8rem; font-weight:900; color:#ef4444;">✖</span>
@@ -1558,7 +1558,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             dom.practiceSortTargetSlots.innerHTML = slotsHtml;
 
-            // Attach listeners to slots
+            // Attach listeners to target slots
             const slotEls = dom.practiceSortTargetSlots.querySelectorAll('.vertical-sort-slot');
             slotEls.forEach(slotEl => {
                 const slotIdx = parseInt(slotEl.dataset.slotIdx);
@@ -1586,6 +1586,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
 
+                // Tap filled slot to return number back to pool
                 slotEl.addEventListener('click', () => {
                     if (practiceSortPlaced[slotIdx]) {
                         AudioEngine.play('drag');
@@ -1596,7 +1597,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // 3. Render Unplaced Numbers Pool Column
+        // 3. Render Unplaced Numbers Pool Column with Instant 1-Touch Dragging & Tapping
         if (dom.practiceSortUnplacedPool) {
             const unplaced = teacherNums.filter(num => !practiceSortPlaced.includes(num));
 
@@ -1608,7 +1609,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 let poolHtml = '';
                 unplaced.forEach(numStr => {
                     poolHtml += `
-                        <div class="btn-sort-pool-item" draggable="true" data-num="${numStr}" title="Seret atau Klik untuk memasukkan ke urutan">
+                        <div class="btn-sort-pool-item" draggable="true" data-num="${numStr}" style="touch-action:none; user-select:none;" title="Seret atau Klik untuk memasukkan ke urutan">
                             ${numStr}
                         </div>
                     `;
@@ -1619,18 +1620,130 @@ document.addEventListener('DOMContentLoaded', () => {
                 poolItemEls.forEach(itemEl => {
                     const numStr = itemEl.dataset.num;
 
+                    // Native HTML5 Drag fallback for desktop mouse drag
                     itemEl.addEventListener('dragstart', (e) => {
                         e.dataTransfer.setData('text/plain', numStr);
                         AudioEngine.play('drag');
                     });
 
-                    itemEl.addEventListener('click', () => {
-                        const emptyIdx = practiceSortPlaced.findIndex(val => !val);
-                        if (emptyIdx !== -1) {
-                            AudioEngine.play('drag');
-                            practiceSortPlaced[emptyIdx] = numStr;
-                            renderPracticeSortBoard();
+                    // Ultra-Smooth 1-Touch Instant Drag & Drop Handler
+                    const handleStart = (clientX, clientY, isTouch, touchId) => {
+                        const startX = clientX;
+                        const startY = clientY;
+                        let isDragging = false;
+                        let clone = null;
+
+                        const handleMove = (moveX, moveY) => {
+                            const dx = Math.abs(moveX - startX);
+                            const dy = Math.abs(moveY - startY);
+
+                            if (!isDragging && (dx > 4 || dy > 4)) {
+                                isDragging = true;
+                                clone = document.createElement('div');
+                                clone.className = 'btn-sort-pool-item floating-touch-token';
+                                clone.textContent = numStr;
+                                clone.style.position = 'fixed';
+                                clone.style.pointerEvents = 'none';
+                                clone.style.zIndex = '999999';
+                                clone.style.width = `${itemEl.offsetWidth || 160}px`;
+                                clone.style.opacity = '0.92';
+                                clone.style.boxShadow = '0 10px 25px rgba(0,0,0,0.3)';
+                                clone.style.left = `${moveX - ((itemEl.offsetWidth || 160) / 2)}px`;
+                                clone.style.top = `${moveY - 25}px`;
+                                document.body.appendChild(clone);
+                                itemEl.style.opacity = '0.4';
+                            } else if (isDragging && clone) {
+                                clone.style.left = `${moveX - ((itemEl.offsetWidth || 160) / 2)}px`;
+                                clone.style.top = `${moveY - 25}px`;
+                            }
+                        };
+
+                        const handleEnd = (endX, endY) => {
+                            if (clone && clone.parentNode) {
+                                clone.parentNode.removeChild(clone);
+                            }
+                            itemEl.style.opacity = '1';
+
+                            if (isDragging) {
+                                const droppedEl = document.elementFromPoint(endX, endY);
+                                if (droppedEl) {
+                                    const targetSlot = droppedEl.closest('.vertical-sort-slot');
+                                    if (targetSlot) {
+                                        const slotIdx = parseInt(targetSlot.dataset.slotIdx);
+                                        if (!isNaN(slotIdx)) {
+                                            const prevIdx = practiceSortPlaced.indexOf(numStr);
+                                            if (prevIdx !== -1) practiceSortPlaced[prevIdx] = null;
+                                            
+                                            practiceSortPlaced[slotIdx] = numStr;
+                                            AudioEngine.play('drag');
+                                            renderPracticeSortBoard();
+                                        }
+                                    }
+                                }
+                            } else {
+                                // Tap Fallback: Single tap immediately moves card to first empty slot!
+                                const emptyIdx = practiceSortPlaced.findIndex(val => !val);
+                                if (emptyIdx !== -1) {
+                                    AudioEngine.play('drag');
+                                    practiceSortPlaced[emptyIdx] = numStr;
+                                    renderPracticeSortBoard();
+                                }
+                            }
+                        };
+
+                        if (isTouch) {
+                            const onTouchMove = (moveEvt) => {
+                                for (let i = 0; i < moveEvt.changedTouches.length; i++) {
+                                    const t = moveEvt.changedTouches[i];
+                                    if (t.identifier === touchId) {
+                                        handleMove(t.clientX, t.clientY);
+                                        break;
+                                    }
+                                }
+                            };
+
+                            const onTouchEnd = (endEvt) => {
+                                for (let i = 0; i < endEvt.changedTouches.length; i++) {
+                                    const t = endEvt.changedTouches[i];
+                                    if (t.identifier === touchId) {
+                                        window.removeEventListener('touchmove', onTouchMove);
+                                        window.removeEventListener('touchend', onTouchEnd);
+                                        window.removeEventListener('touchcancel', onTouchEnd);
+                                        handleEnd(t.clientX, t.clientY);
+                                        break;
+                                    }
+                                }
+                            };
+
+                            window.addEventListener('touchmove', onTouchMove, { passive: false });
+                            window.addEventListener('touchend', onTouchEnd, { passive: false });
+                            window.addEventListener('touchcancel', onTouchEnd, { passive: false });
+                        } else {
+                            const onPointerMove = (moveEvt) => {
+                                handleMove(moveEvt.clientX, moveEvt.clientY);
+                            };
+
+                            const onPointerUp = (upEvt) => {
+                                window.removeEventListener('pointermove', onPointerMove);
+                                window.removeEventListener('pointerup', onPointerUp);
+                                window.removeEventListener('pointercancel', onPointerUp);
+                                handleEnd(upEvt.clientX, upEvt.clientY);
+                            };
+
+                            window.addEventListener('pointermove', onPointerMove);
+                            window.addEventListener('pointerup', onPointerUp);
+                            window.addEventListener('pointercancel', onPointerUp);
                         }
+                    };
+
+                    itemEl.addEventListener('touchstart', (e) => {
+                        const t = e.changedTouches[0];
+                        if (t) handleStart(t.clientX, t.clientY, true, t.identifier);
+                    }, { passive: true });
+
+                    itemEl.addEventListener('pointerdown', (e) => {
+                        if (e.pointerType === 'touch') return;
+                        handleStart(e.clientX, e.clientY, false, null);
                     });
                 });
             }
