@@ -556,6 +556,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const token = document.createElement('div');
             token.className = 'digit-token-static';
             token.dataset.digit = d;
+            token.style.touchAction = 'none';
 
             token.innerHTML = `
                 <span class="token-digit-num">${d}</span>
@@ -570,6 +571,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (btnP1) {
                 btnP1.addEventListener('pointerdown', (e) => {
                     e.stopPropagation();
+                    e.preventDefault();
                     AudioEngine.play('drag');
                     state.p1SelectedDigitVal = d;
                     if (dom.p1SelectedDigitValDisp) dom.p1SelectedDigitValDisp.textContent = d;
@@ -584,6 +586,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (btnP2) {
                 btnP2.addEventListener('pointerdown', (e) => {
                     e.stopPropagation();
+                    e.preventDefault();
                     AudioEngine.play('drag');
                     state.p2SelectedDigitVal = d;
                     if (dom.p2SelectedDigitValDisp) dom.p2SelectedDigitValDisp.textContent = d;
@@ -593,38 +596,52 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            // 3. Multi-Touch Concurrent Pointer Dragging for 2 Players
+            // 3. Multi-Touch Concurrent Pointer Dragging for 2 Players + Instant Tap Fallback
             token.addEventListener('pointerdown', (e) => {
                 if (e.target.classList.contains('btn-tap-p1') || e.target.classList.contains('btn-tap-p2')) return;
-                
+                e.stopPropagation();
+
+                const startX = e.clientX;
+                const startY = e.clientY;
+                let isDragging = false;
+                let clone = null;
+
                 try {
                     token.setPointerCapture(e.pointerId);
                 } catch (err) {}
 
-                const clone = document.createElement('div');
-                clone.className = 'floating-touch-token';
-                clone.textContent = d;
-                clone.style.left = `${e.clientX - 26}px`;
-                clone.style.top = `${e.clientY - 26}px`;
-                document.body.appendChild(clone);
-
                 const onPointerMove = (moveEvt) => {
-                    if (moveEvt.pointerId === e.pointerId) {
+                    if (moveEvt.pointerId !== e.pointerId) return;
+                    const dx = Math.abs(moveEvt.clientX - startX);
+                    const dy = Math.abs(moveEvt.clientY - startY);
+
+                    if (!isDragging && (dx > 5 || dy > 5)) {
+                        isDragging = true;
+                        clone = document.createElement('div');
+                        clone.className = 'floating-touch-token';
+                        clone.textContent = d;
+                        clone.style.left = `${moveEvt.clientX - 26}px`;
+                        clone.style.top = `${moveEvt.clientY - 26}px`;
+                        document.body.appendChild(clone);
+                    } else if (isDragging && clone) {
                         clone.style.left = `${moveEvt.clientX - 26}px`;
                         clone.style.top = `${moveEvt.clientY - 26}px`;
                     }
                 };
 
                 const onPointerUp = (upEvt) => {
-                    if (upEvt.pointerId === e.pointerId) {
-                        try {
-                            token.releasePointerCapture(e.pointerId);
-                        } catch (err) {}
-                        window.removeEventListener('pointermove', onPointerMove);
-                        window.removeEventListener('pointerup', onPointerUp);
-                        window.removeEventListener('pointercancel', onPointerUp);
-                        if (clone.parentNode) clone.parentNode.removeChild(clone);
+                    if (upEvt.pointerId !== e.pointerId) return;
+                    
+                    try { token.releasePointerCapture(e.pointerId); } catch (err) {}
+                    window.removeEventListener('pointermove', onPointerMove);
+                    window.removeEventListener('pointerup', onPointerUp);
+                    window.removeEventListener('pointercancel', onPointerUp);
 
+                    if (clone && clone.parentNode) {
+                        clone.parentNode.removeChild(clone);
+                    }
+
+                    if (isDragging) {
                         const droppedEl = document.elementFromPoint(upEvt.clientX, upEvt.clientY);
                         if (droppedEl) {
                             const digitBox = droppedEl.closest('.digit-box');
@@ -635,6 +652,16 @@ document.addEventListener('DOMContentLoaded', () => {
                                     placeDigitInSlot(pKey, slotIdx, d);
                                 }
                             }
+                        }
+                    } else {
+                        // Instant Tap Fallback: If pressed without dragging, fill P1 then P2 slot!
+                        AudioEngine.play('drag');
+                        const p1Q = state.p1Question;
+                        const p2Q = state.p2Question;
+                        if (p1Q && !p1Q.isComplete && p1Q.targetSlots.some(s => !s.filled)) {
+                            placeNextEmptySlot('p1', d);
+                        } else if (p2Q && !p2Q.isComplete && p2Q.targetSlots.some(s => !s.filled)) {
+                            placeNextEmptySlot('p2', d);
                         }
                     }
                 };
@@ -1026,8 +1053,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- TAB 2: MATERI GURU INTERAKTIF ENGINE ---
     function renderMateriTab() {
-        const rawDigits = dom.materiNumInput.value.replace(/\D/g, '') || '0';
-        dom.materiNumInput.value = formatDots(rawDigits);
+        const rawDigitsClean = dom.materiNumInput.value.replace(/\D/g, '');
+        if (rawDigitsClean === '') {
+            dom.materiNumInput.value = '';
+            dom.materiWordsText.innerHTML = '<span style="color: #94a3b8; font-style: italic;">Silakan ketikkan angka di atas...</span>';
+            dom.materiMatrixGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align:center; padding:20px; color:#94a3b8; font-weight:700;">Ketikkan angka pada kolom input di atas untuk melihat dekomposisi nilai tempat</div>';
+            dom.materiExpansionText.textContent = '-';
+            return;
+        }
+
+        const formatted = formatDots(rawDigitsClean);
+        if (dom.materiNumInput.value !== formatted) {
+            dom.materiNumInput.value = formatted;
+        }
+        const rawDigits = rawDigitsClean;
 
         // 1. COLOR-CODED TERJEMAHAN BAHASA INDONESIA
         const coloredHTML = terbilangIndonesianColored(rawDigits);
