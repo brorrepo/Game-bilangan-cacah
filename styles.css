@@ -877,10 +877,26 @@ input, textarea {
     font-family: var(--font-heading);
 }
 
-.matrix-scroll-wrapper { overflow-x: auto; padding-bottom: 6px; }
-.matrix-grid { display: flex; gap: 6px; min-width: 850px; }
+.matrix-scroll-wrapper {
+    overflow-x: auto;
+    padding-bottom: 6px;
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
+}
+
+.matrix-grid-container, .matrix-grid {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 6px;
+    min-width: 900px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
 .matrix-col {
-    flex: 1;
+    flex: 1 1 0px !important;
+    min-width: 52px;
     background: var(--neo-white);
     border: 2px solid var(--neo-black);
     box-shadow: 2px 2px 0px #0f172a;

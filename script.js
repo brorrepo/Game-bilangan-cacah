@@ -1537,31 +1537,36 @@ document.addEventListener('DOMContentLoaded', () => {
         dom.btnHomeMenu.addEventListener('click', handleGoHome);
     }
 
-    // MATERI SUB-TAB NAVIGATION LISTENERS (INSTANT RESPONSE)
-    if (dom.subTabBtns) {
-        dom.subTabBtns.forEach(btn => {
-            const handleSubTabSwitch = (e) => {
-                if (e) { e.preventDefault(); e.stopPropagation(); }
-                AudioEngine.play('drag');
-                dom.subTabBtns.forEach(b => b.classList.remove('active'));
-                dom.materiSubContents.forEach(sc => sc.classList.remove('active'));
+    // MATERI SUB-TAB NAVIGATION LISTENERS (100% RELIABLE)
+    const allSubTabBtns = document.querySelectorAll('.sub-tab-btn');
+    const allMateriSubContents = document.querySelectorAll('.materi-sub-content');
 
-                btn.classList.add('active');
-                const targetSub = btn.dataset.subtab;
-                const targetEl = document.getElementById(targetSub);
-                if (targetEl) targetEl.classList.add('active');
+    allSubTabBtns.forEach(btn => {
+        const switchSubTab = (e) => {
+            AudioEngine.play('drag');
+            allSubTabBtns.forEach(b => b.classList.remove('active'));
+            allMateriSubContents.forEach(sc => {
+                sc.classList.remove('active');
+                sc.style.display = 'none';
+            });
 
-                state.activeMateriSubTab = targetSub;
+            btn.classList.add('active');
+            const targetSub = btn.dataset.subtab || btn.getAttribute('data-subtab');
+            const targetEl = document.getElementById(targetSub);
+            if (targetEl) {
+                targetEl.classList.add('active');
+                targetEl.style.display = 'flex';
+            }
 
-                if (targetSub === 'subtab-dekomposisi') renderMateriTab();
-                if (targetSub === 'subtab-banding') renderCompareModule();
-                if (targetSub === 'subtab-urut') renderSortingModule();
-            };
+            state.activeMateriSubTab = targetSub;
 
-            btn.addEventListener('pointerdown', handleSubTabSwitch);
-            btn.addEventListener('click', handleSubTabSwitch);
-        });
-    }
+            if (targetSub === 'subtab-dekomposisi') renderMateriTab();
+            if (targetSub === 'subtab-banding') renderCompareModule();
+            if (targetSub === 'subtab-urut') renderSortingModule();
+        };
+
+        btn.onclick = switchSubTab;
+    });
 
     // COMPARE LISTENERS
     if (dom.compareNumA) dom.compareNumA.addEventListener('input', renderCompareModule);

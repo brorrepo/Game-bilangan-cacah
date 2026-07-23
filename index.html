@@ -201,17 +201,20 @@
                     </div>
 
                     <div class="teacher-input-card">
-                        <label for="materi-num-input"><strong>Ketikkan Bilangan Cacah:</strong></label>
-                        <input type="text" id="materi-num-input" value="12.345.678.901" maxlength="24" inputmode="numeric" pattern="[0-9]*" placeholder="Ketikkan angka di sini...">
-                    </div>
+                        <label for="materi-num-input">✍️ MASUKKAN ANGKA MATERI GURU:</label>
+                        <div class="input-with-presets">
+                            <input type="text" id="materi-num-input" value="12.345.678.901" maxlength="24" inputmode="numeric" pattern="[0-9]*" placeholder="Ketik angka di sini...">
+                        </div>
 
-                    <div class="materi-presets-bar">
-                        <span class="preset-label">💡 Contoh Cepat Guru:</span>
-                        <button class="btn-preset" data-num="500">💯 Ratusan (500)</button>
-                        <button class="btn-preset" data-num="75000">⚡ Puluhan Ribu (75.000)</button>
-                        <button class="btn-preset" data-num="45000000">🌟 Puluhan Juta (45.000.000)</button>
-                        <button class="btn-preset" data-num="2500000000">🏆 Miliar (2.500.000.000)</button>
-                        <button class="btn-preset" data-num="123456789012">💎 Triliun (123.456.789.012)</button>
+                        <div class="preset-pills">
+                            <span class="preset-label">💡 Contoh Cepat Materi:</span>
+                            <button class="btn-preset" data-num="500">📌 500 Ratusan</button>
+                            <button class="btn-preset" data-num="75000">📌 75 Ribu</button>
+                            <button class="btn-preset" data-num="45000000">📌 45 Juta</button>
+                            <button class="btn-preset" data-num="2500000000">📌 2,5 Miliar</button>
+                            <button class="btn-preset" data-num="123456789012">📌 123,4 Miliar</button>
+                            <button class="btn-preset" data-num="3450000000000">📌 3,45 Triliun</button>
+                        </div>
                     </div>
 
                     <!-- 1. COLOR-CODED TERJEMAHAN BAHASA INDONESIA -->
@@ -223,7 +226,9 @@
                     <!-- 2. PLACE VALUE BREAKDOWN MATRIX -->
                     <div class="materi-box">
                         <div class="materi-box-title">📊 TABEL DEKOMPOSISI NILAI TEMPAT (15 KOLOM):</div>
-                        <div class="matrix-grid-container" id="materi-matrix-grid"></div>
+                        <div class="matrix-scroll-wrapper">
+                            <div class="matrix-grid-container" id="materi-matrix-grid"></div>
+                        </div>
                     </div>
 
                     <!-- 3. EXPANDED FORM NOTATION -->
