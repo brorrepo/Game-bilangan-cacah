@@ -936,98 +936,116 @@ document.addEventListener('DOMContentLoaded', () => {
     function checkPlayerAnswer(pKey) {
         const question = pKey === 'p1' ? state.p1Question : state.p2Question;
         const feedbackEl = pKey === 'p1' ? dom.p1Feedback : dom.p2Feedback;
+        const checkBtn = pKey === 'p1' ? dom.p1BtnCheck : dom.p2BtnCheck;
 
         if (!question || question.isComplete) return;
 
-        let isAllCorrect = false;
-
-        if (question.category === 'nilai_tempat') {
-            const unfilled = question.targetSlots.some(s => !s.filled);
-            if (unfilled) {
-                AudioEngine.play('wrong');
-                feedbackEl.textContent = '❌ Isilah semua kotak nilai tempat terlebih dahulu!';
-                feedbackEl.className = 'feedback-msg wrong';
-                return;
-            }
-
-            let correctCount = 0;
-            question.targetSlots.forEach(s => {
-                if (s.filledDigit === s.expectedDigit) {
-                    s.status = 'correct';
-                    correctCount++;
-                } else {
-                    s.status = 'wrong';
-                }
-            });
-
-            isAllCorrect = (correctCount === question.targetSlots.length);
-        } else if (question.category === 'membandingkan') {
-            if (!question.selectedOp) {
-                AudioEngine.play('wrong');
-                feedbackEl.textContent = '⚠️ Pilih operator (> , < , =) terlebih dahulu!';
-                feedbackEl.className = 'feedback-msg wrong';
-                return;
-            }
-            isAllCorrect = (question.selectedOp === question.expectedOp);
-        } else if (question.category === 'mengurutkan') {
-            if (question.targetSlots.length < 3) {
-                AudioEngine.play('wrong');
-                feedbackEl.textContent = '⚠️ Susun 3 bilangan ke dalam urutan #1, #2, dan #3!';
-                feedbackEl.className = 'feedback-msg wrong';
-                return;
-            }
-            const placedBigInts = question.targetSlots.map(s => BigInt(s.replace(/\D/g, '') || '0'));
-            const expectedBigInts = (question.expectedSorted || []).map(s => BigInt(s.replace(/\D/g, '') || '0'));
-            isAllCorrect = placedBigInts.every((val, idx) => val === expectedBigInts[idx]);
+        // Instant visual loading feedback
+        if (checkBtn) {
+            checkBtn.textContent = '⚡ MEMERIKSA...';
+            checkBtn.disabled = true;
         }
+        feedbackEl.textContent = '⏳ Memeriksa jawaban...';
+        feedbackEl.className = 'feedback-msg neutral';
 
-        renderPlayerSingleSoal(pKey, question);
-
-        if (isAllCorrect) {
-            AudioEngine.play('correct');
-            question.isComplete = true;
-
-            const roundPoin = question.category === 'nilai_tempat' ? 100 * question.targetSlots.length : 300;
-            if (pKey === 'p1') {
-                state.p1Score += roundPoin;
-                dom.p1Score.textContent = state.p1Score;
-            } else {
-                state.p2Score += roundPoin;
-                dom.p2Score.textContent = state.p2Score;
+        setTimeout(() => {
+            if (checkBtn) {
+                checkBtn.textContent = '✔️ CEK JAWABAN';
+                checkBtn.disabled = false;
             }
 
-            const currentRound = pKey === 'p1' ? state.p1CurrentRound : state.p2CurrentRound;
+            let isAllCorrect = false;
 
-            if (currentRound < state.totalRounds) {
+            if (question.category === 'nilai_tempat') {
+                const unfilled = question.targetSlots.some(s => !s.filled);
+                if (unfilled) {
+                    AudioEngine.play('wrong');
+                    feedbackEl.textContent = '❌ Isilah semua kotak nilai tempat terlebih dahulu!';
+                    feedbackEl.className = 'feedback-msg wrong';
+                    return;
+                }
+
+                let correctCount = 0;
+                question.targetSlots.forEach(s => {
+                    if (s.filledDigit === s.expectedDigit) {
+                        s.status = 'correct';
+                        correctCount++;
+                    } else {
+                        s.status = 'wrong';
+                    }
+                });
+
+                isAllCorrect = (correctCount === question.targetSlots.length);
+            } else if (question.category === 'membandingkan') {
+                if (!question.selectedOp) {
+                    AudioEngine.play('wrong');
+                    feedbackEl.textContent = '⚠️ Pilih operator (> , < , =) terlebih dahulu!';
+                    feedbackEl.className = 'feedback-msg wrong';
+                    return;
+                }
+                isAllCorrect = (question.selectedOp === question.expectedOp);
+            } else if (question.category === 'mengurutkan') {
+                if (question.targetSlots.length < 3) {
+                    AudioEngine.play('wrong');
+                    feedbackEl.textContent = '⚠️ Susun ketiga bilangan ke dalam urutan #1, #2, dan #3!';
+                    feedbackEl.className = 'feedback-msg wrong';
+                    return;
+                }
+
+                // Robust BigInt comparison for Mengurutkan
+                const cleanTarget = question.targetSlots.map(v => BigInt(v.replace(/\D/g, '')));
+                const cleanExpected = (question.expectedSorted || []).map(v => BigInt(v.replace(/\D/g, '')));
+                isAllCorrect = cleanTarget.every((val, idx) => val === cleanExpected[idx]);
+            }
+
+            renderPlayerSingleSoal(pKey, question);
+
+            if (isAllCorrect) {
+                AudioEngine.play('correct');
+                question.isComplete = true;
+
+                const roundPoin = question.category === 'nilai_tempat' ? 100 * question.targetSlots.length : 300;
                 if (pKey === 'p1') {
-                    state.p1CurrentRound++;
-                    state.p1Question = buildPlayerQuestionFromSeq('p1', state.p1CurrentRound - 1);
+                    state.p1Score += roundPoin;
+                    dom.p1Score.textContent = state.p1Score;
                 } else {
-                    state.p2CurrentRound++;
-                    state.p2Question = buildPlayerQuestionFromSeq('p2', state.p2CurrentRound - 1);
+                    state.p2Score += roundPoin;
+                    dom.p2Score.textContent = state.p2Score;
                 }
 
-                feedbackEl.innerHTML = `⚡ <strong>BENAR! (+${roundPoin} POIN)</strong> <span class="loading-spin-badge">⏳ Memuat Ronde ${currentRound + 1}...</span>`;
-                feedbackEl.className = 'feedback-msg correct';
+                const currentRound = pKey === 'p1' ? state.p1CurrentRound : state.p2CurrentRound;
 
-                setTimeout(() => {
-                    feedbackEl.textContent = '';
-                    renderPlayerSingleSoal(pKey, pKey === 'p1' ? state.p1Question : state.p2Question);
-                }, 400);
+                if (currentRound < state.totalRounds) {
+                    if (pKey === 'p1') {
+                        state.p1CurrentRound++;
+                        state.p1Question = buildPlayerQuestionFromSeq('p1', state.p1CurrentRound - 1);
+                    } else {
+                        state.p2CurrentRound++;
+                        state.p2Question = buildPlayerQuestionFromSeq('p2', state.p2CurrentRound - 1);
+                    }
+
+                    feedbackEl.textContent = `🚀 BENAR! +${roundPoin} POIN! Otomatis lanjut ke RONDE ${currentRound + 1}...`;
+                    feedbackEl.className = 'feedback-msg correct';
+
+                    setTimeout(() => {
+                        feedbackEl.textContent = '';
+                        renderPlayerSingleSoal(pKey, pKey === 'p1' ? state.p1Question : state.p2Question);
+                    }, 400);
+                } else {
+                    if (pKey === 'p1') state.p1FinishedAll = true;
+                    else state.p2FinishedAll = true;
+
+                    feedbackEl.textContent = '🎉 BENAR! KAMU SUDAH MENYELESAIKAN SEMUA RONDE!';
+                    feedbackEl.className = 'feedback-msg correct';
+
+                    checkEndGame();
+                }
             } else {
-                if (pKey === 'p1') state.p1FinishedAll = true;
-                else state.p2FinishedAll = true;
-
-                feedbackEl.innerHTML = `🎉 <strong>BENAR! (+${roundPoin} POIN)</strong> 🏆 SEMUA RONDE SELESAI!`;
-                feedbackEl.className = 'feedback-msg correct';
-
-                checkEndGame();
+                AudioEngine.play('wrong');
+                feedbackEl.textContent = '❌ Jawaban belum tepat, coba perbaiki pilihanmu!';
+                feedbackEl.className = 'feedback-msg wrong';
             }
-        } else {
-            AudioEngine.play('wrong');
-            feedbackEl.textContent = '❌ Jawaban belum tepat, coba perbaiki pilihanmu!';
-            feedbackEl.className = 'feedback-msg wrong';
-        }
+        }, 50);
     }
 
     function checkEndGame() {
@@ -1150,42 +1168,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    function toggleSpeechAudio(textToSpeak, btnElement, defaultLabel) {
-        if (!('speechSynthesis' in window)) return;
-
-        if (window.speechSynthesis.speaking) {
-            window.speechSynthesis.cancel();
-            state.isSpeaking = false;
-            if (btnElement) btnElement.textContent = defaultLabel;
-            return;
+    dom.btnSpeakMateri.addEventListener('click', () => {
+        if ('speechSynthesis' in window) {
+            const textToSpeak = dom.materiWordsText.textContent;
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+            utterance.lang = 'id-ID';
+            window.speechSynthesis.speak(utterance);
         }
-
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(textToSpeak);
-        utterance.lang = 'id-ID';
-        utterance.rate = 0.9;
-
-        if (btnElement) btnElement.textContent = '⏹️ Hentikan Suara';
-
-        state.isSpeaking = true;
-
-        utterance.onend = () => {
-            state.isSpeaking = false;
-            if (btnElement) btnElement.textContent = defaultLabel;
-        };
-        utterance.onerror = () => {
-            state.isSpeaking = false;
-            if (btnElement) btnElement.textContent = defaultLabel;
-        };
-
-        window.speechSynthesis.speak(utterance);
-    }
-
-    if (dom.btnSpeakMateri) {
-        dom.btnSpeakMateri.addEventListener('click', () => {
-            toggleSpeechAudio(dom.materiWordsText.textContent, dom.btnSpeakMateri, '🔊 Dengarkan Terbilang');
-        });
-    }
+    });
 
     // --- TERBILANG PLAIN TEXT HELPER ---
     function terbilangTextPlain(nStr) {
@@ -1290,38 +1280,12 @@ document.addEventListener('DOMContentLoaded', () => {
             verdictText = `Bilangan A <strong>(${formatDots(rawA)})</strong> SAMA DENGAN Bilangan B <strong>(${formatDots(rawB)})</strong>`;
         }
 
-        if (state.materiCompareSelectedOp) {
-            const chosenOp = state.materiCompareSelectedOp;
-            const isOpCorrect = chosenOp === op;
-            
-            if (dom.compareOpBadge) {
-                dom.compareOpBadge.textContent = chosenOp;
-                dom.compareOpBadge.style.background = isOpCorrect ? '#4ade80' : '#f87171';
-            }
-            if (dom.compareOpText) {
-                dom.compareOpText.textContent = chosenOp === '>' ? 'Lebih Besar Dari' : (chosenOp === '<' ? 'Lebih Kecil Dari' : 'Sama Dengan');
-            }
-
-            if (dom.compareVerdictBanner) {
-                if (isOpCorrect) {
-                    dom.compareVerdictBanner.innerHTML = `✅ <strong>TEPAT SEKALI!</strong> Pilihan operator <strong>${chosenOp}</strong> sudah benar! ${verdictText}`;
-                    dom.compareVerdictBanner.className = 'compare-verdict-banner correct-banner';
-                } else {
-                    dom.compareVerdictBanner.innerHTML = `❌ <strong>BELUM TEPAT!</strong> Anda memilih <strong>${chosenOp}</strong>. Seharusnya operator yang tepat adalah <strong>${op}</strong>. ${verdictText}`;
-                    dom.compareVerdictBanner.className = 'compare-verdict-banner wrong-banner';
-                }
-            }
-        } else {
-            if (dom.compareOpBadge) {
-                dom.compareOpBadge.textContent = '❓';
-                dom.compareOpBadge.style.background = '#fef08a';
-            }
-            if (dom.compareOpText) dom.compareOpText.textContent = 'Kotak Kosong';
-            if (dom.compareVerdictBanner) {
-                dom.compareVerdictBanner.innerHTML = `💡 <strong>PENERAPAN KONSEP:</strong> Silakan seret ATAU klik salah satu pilihan operator ( > , < , = ) di atas untuk mengisi kotak kosong ❓ di tengah.`;
-                dom.compareVerdictBanner.className = 'compare-verdict-banner';
-            }
+        if (dom.compareOpBadge) {
+            dom.compareOpBadge.textContent = op;
+            dom.compareOpBadge.style.background = opColor;
         }
+        if (dom.compareOpText) dom.compareOpText.textContent = opText;
+        if (dom.compareVerdictBanner) dom.compareVerdictBanner.innerHTML = verdictText;
 
         const steps = [];
         const lenA = rawA.length;
@@ -1368,7 +1332,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- SUBTAB 3: MENGURUTKAN BILANGAN ENGINE (VERTICAL TOP-TO-BOTTOM) ---
+    // --- SUBTAB 3: MENGURUTKAN BILANGAN ENGINE ---
     function renderSortingModule() {
         if (!dom.sortNumInputs || dom.sortNumInputs.length === 0) return;
 
@@ -1400,8 +1364,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (dom.sortResultTitle) {
             dom.sortResultTitle.textContent = isAsc 
-                ? '🏆 HASIL URUTAN DARI TERKECIL KE TERBESAR (VERTIKAL KE BAWAH ⬇️):' 
-                : '🏆 HASIL URUTAN DARI TERBESAR KE TERKECIL (VERTIKAL KE BAWAH ⬇️):';
+                ? '🏆 HASIL URUTAN DARI TERKECIL KE TERBESAR (NAIK ↗️):' 
+                : '🏆 HASIL URUTAN DARI TERBESAR KE TERKECIL (TURUN ↘️):';
         }
 
         const cardColors = [
@@ -1416,19 +1380,19 @@ document.addEventListener('DOMContentLoaded', () => {
             items.forEach((item, rankIdx) => {
                 const theme = cardColors[rankIdx % cardColors.length];
                 html += `
-                    <div class="sorted-card-item rank-card-${rankIdx + 1}" style="background:${theme.bg}; border:2.5px solid var(--neo-black); box-shadow:4px 4px 0px #0f172a; padding:12px 16px; border-radius:12px; width:95%; box-sizing:border-box;">
-                        <div class="rank-header-bar" style="display:flex; justify-space-between; align-items:center; border-bottom:2px solid var(--neo-black); padding-bottom:6px; margin-bottom:8px;">
-                            <span class="rank-badge-colored" style="background:${theme.badgeBg}; color:var(--neo-black); border:1.5px solid var(--neo-black); font-weight:900; padding:3px 10px; border-radius:6px; font-size:0.85rem;">
-                                ${theme.icon} Urutan #${rankIdx + 1} (${rankIdx === 0 ? 'Paling Atas' : (rankIdx === items.length - 1 ? 'Paling Bawah' : 'Tengah')})
+                    <div class="sorted-card-item rank-card-${rankIdx + 1}" style="background:${theme.bg}; border:2.5px solid var(--neo-black); box-shadow:4px 4px 0px #0f172a; padding:12px; border-radius:12px; min-width:180px; flex:1;">
+                        <div class="rank-header-bar" style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--neo-black); padding-bottom:6px; margin-bottom:8px;">
+                            <span class="rank-badge-colored" style="background:${theme.badgeBg}; color:var(--neo-black); border:1.5px solid var(--neo-black); font-weight:900; padding:3px 10px; border-radius:6px; font-size:0.8rem;">
+                                ${theme.icon} Urutan #${rankIdx + 1}
                             </span>
-                            <span style="font-size:0.8rem; font-weight:800; color:#475569;">(Input Bilangan ${item.origIdx})</span>
+                            <span style="font-size:0.75rem; font-weight:800; color:#475569;">(Bilangan ${item.origIdx})</span>
                         </div>
-                        <div style="font-size:1.4rem; font-weight:900; color:var(--neo-black); margin-bottom:4px;">${item.formatted}</div>
-                        <div style="font-size:0.85rem; font-weight:700; color:#334155; font-style:italic;">"${item.words}"</div>
+                        <div style="font-size:1.35rem; font-weight:900; color:var(--neo-black); margin-bottom:4px;">${item.formatted}</div>
+                        <div style="font-size:0.8rem; font-weight:700; color:#334155; font-style:italic;">"${item.words}"</div>
                     </div>
                 `;
                 if (rankIdx < items.length - 1) {
-                    html += `<div class="sort-arrow" style="font-size:1.8rem; font-weight:900; text-align:center; margin: 4px 0; color:var(--neo-black);">👇</div>`;
+                    html += `<div class="sort-arrow" style="font-size:1.8rem; font-weight:900; align-self:center; color:var(--neo-black);">➔</div>`;
                 }
             });
             dom.sortedCardsContainer.innerHTML = html;
@@ -1458,131 +1422,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // MAIN HEADER TAB NAVIGATION LISTENERS
-    const mainNavBtns = document.querySelectorAll('.nav-btn');
-    const mainTabContents = document.querySelectorAll('.tab-content');
+    // MATERI SUB-TAB NAVIGATION LISTENERS
+    if (dom.subTabBtns) {
+        dom.subTabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                dom.subTabBtns.forEach(b => b.classList.remove('active'));
+                dom.materiSubContents.forEach(sc => sc.classList.remove('active'));
 
-    mainNavBtns.forEach(btn => {
-        const switchMainTab = () => {
-            AudioEngine.play('drag');
-            mainNavBtns.forEach(b => b.classList.remove('active'));
-            mainTabContents.forEach(tc => {
-                tc.classList.remove('active');
-                tc.style.display = 'none';
+                btn.classList.add('active');
+                const targetSub = btn.dataset.subtab;
+                const targetEl = document.getElementById(targetSub);
+                if (targetEl) targetEl.classList.add('active');
+
+                state.activeMateriSubTab = targetSub;
+
+                if (targetSub === 'subtab-dekomposisi') renderMateriTab();
+                if (targetSub === 'subtab-banding') renderCompareModule();
+                if (targetSub === 'subtab-urut') renderSortingModule();
             });
-
-            btn.classList.add('active');
-            const targetTab = btn.getAttribute('data-tab');
-            const targetEl = document.getElementById(targetTab);
-            if (targetEl) {
-                targetEl.classList.add('active');
-                targetEl.style.display = 'flex';
-            }
-
-            if (targetTab === 'tab-battle') {
-                if (dom.startOverlay) dom.startOverlay.classList.add('active');
-            } else if (targetTab === 'tab-materi') {
-                renderMateriTab();
-                renderCompareModule();
-                renderSortingModule();
-            }
-        };
-
-        btn.onpointerdown = switchMainTab;
-        btn.onclick = switchMainTab;
-    });
-
-    // WELCOME HUB LISTENERS
-    if (dom.btnSelectHubBattle) {
-        const handleSelectBattle = () => {
-            AudioEngine.play('drag');
-            if (dom.welcomeHubOverlay) dom.welcomeHubOverlay.classList.remove('active');
-            mainNavBtns.forEach(b => b.classList.remove('active'));
-            mainTabContents.forEach(tc => {
-                tc.classList.remove('active');
-                tc.style.display = 'none';
-            });
-            
-            const battleTab = document.querySelector('.nav-btn[data-tab="tab-battle"]');
-            if (battleTab) battleTab.classList.add('active');
-            const battleContent = document.getElementById('tab-battle');
-            if (battleContent) {
-                battleContent.classList.add('active');
-                battleContent.style.display = 'flex';
-            }
-
-            if (dom.startOverlay) dom.startOverlay.classList.add('active');
-        };
-        dom.btnSelectHubBattle.onpointerdown = handleSelectBattle;
-        dom.btnSelectHubBattle.onclick = handleSelectBattle;
+        });
     }
-
-    if (dom.btnSelectHubMateri) {
-        const handleSelectMateri = () => {
-            AudioEngine.play('drag');
-            if (dom.welcomeHubOverlay) dom.welcomeHubOverlay.classList.remove('active');
-            mainNavBtns.forEach(b => b.classList.remove('active'));
-            mainTabContents.forEach(tc => {
-                tc.classList.remove('active');
-                tc.style.display = 'none';
-            });
-            
-            const materiTab = document.querySelector('.nav-btn[data-tab="tab-materi"]');
-            if (materiTab) materiTab.classList.add('active');
-            const materiContent = document.getElementById('tab-materi');
-            if (materiContent) {
-                materiContent.classList.add('active');
-                materiContent.style.display = 'flex';
-            }
-
-            renderMateriTab();
-            renderCompareModule();
-            renderSortingModule();
-        };
-        dom.btnSelectHubMateri.onpointerdown = handleSelectMateri;
-        dom.btnSelectHubMateri.onclick = handleSelectMateri;
-    }
-
-    if (dom.btnHomeMenu) {
-        const handleGoHome = () => {
-            AudioEngine.play('drag');
-            if (dom.welcomeHubOverlay) dom.welcomeHubOverlay.classList.add('active');
-        };
-        dom.btnHomeMenu.onpointerdown = handleGoHome;
-        dom.btnHomeMenu.onclick = handleGoHome;
-    }
-
-    // MATERI SUB-TAB NAVIGATION LISTENERS (100% RELIABLE)
-    const allSubTabBtns = document.querySelectorAll('.sub-tab-btn');
-    const allMateriSubContents = document.querySelectorAll('.materi-sub-content');
-
-    allSubTabBtns.forEach(btn => {
-        const switchSubTab = () => {
-            AudioEngine.play('drag');
-            allSubTabBtns.forEach(b => b.classList.remove('active'));
-            allMateriSubContents.forEach(sc => {
-                sc.classList.remove('active');
-                sc.style.display = 'none';
-            });
-
-            btn.classList.add('active');
-            const targetSub = btn.getAttribute('data-subtab');
-            const targetEl = document.getElementById(targetSub);
-            if (targetEl) {
-                targetEl.classList.add('active');
-                targetEl.style.display = 'flex';
-            }
-
-            state.activeMateriSubTab = targetSub;
-
-            if (targetSub === 'subtab-dekomposisi') renderMateriTab();
-            if (targetSub === 'subtab-banding') renderCompareModule();
-            if (targetSub === 'subtab-urut') renderSortingModule();
-        };
-
-        btn.onpointerdown = switchSubTab;
-        btn.onclick = switchSubTab;
-    });
 
     // COMPARE LISTENERS
     if (dom.compareNumA) dom.compareNumA.addEventListener('input', renderCompareModule);
@@ -1616,52 +1475,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (dom.btnSpeakCompare) {
         dom.btnSpeakCompare.addEventListener('click', () => {
-            if (dom.compareVerdictBanner) {
-                toggleSpeechAudio(dom.compareVerdictBanner.textContent, dom.btnSpeakCompare, '🔊 Dengarkan Penjelasan');
-            }
-        });
-    }
-
-    // MATERI SUBTAB 2 OPERATOR CONCEPT BOARD LISTENERS
-    const btnMateriOpChoices = document.querySelectorAll('.btn-materi-op-choice');
-    btnMateriOpChoices.forEach(btn => {
-        const handleMateriOpChoose = (e) => {
-            if (e) { e.preventDefault(); e.stopPropagation(); }
-            AudioEngine.play('drag');
-            const op = btn.dataset.op;
-            state.materiCompareSelectedOp = op;
-            btnMateriOpChoices.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            renderCompareModule();
-        };
-        btn.onpointerdown = handleMateriOpChoose;
-        btn.onclick = handleMateriOpChoose;
-    });
-
-    const btnClearCompareOp = document.getElementById('btn-clear-compare-op');
-    if (btnClearCompareOp) {
-        btnClearCompareOp.addEventListener('click', () => {
-            AudioEngine.play('drag');
-            state.materiCompareSelectedOp = null;
-            btnMateriOpChoices.forEach(b => b.classList.remove('active'));
-            renderCompareModule();
-        });
-    }
-
-    // GLOBAL REFRESH BUTTON LISTENER
-    const btnGlobalRefresh = document.getElementById('btn-global-refresh');
-    if (btnGlobalRefresh) {
-        btnGlobalRefresh.addEventListener('click', () => {
-            AudioEngine.play('drag');
-            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-            initBattle();
-            renderMateriTab();
-            renderCompareModule();
-            renderSortingModule();
-            if (dom.p1Feedback) {
-                dom.p1Feedback.textContent = '🔄 Aplikasi & Permainan Berhasil Di-refresh!';
-                dom.p1Feedback.className = 'feedback-msg correct';
-                setTimeout(() => { dom.p1Feedback.textContent = ''; }, 2500);
+            if ('speechSynthesis' in window && dom.compareVerdictBanner) {
+                const textToSpeak = dom.compareVerdictBanner.textContent;
+                const utterance = new SpeechSynthesisUtterance(textToSpeak);
+                utterance.lang = 'id-ID';
+                window.speechSynthesis.speak(utterance);
             }
         });
     }
@@ -1862,18 +1680,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, { passive: false });
 
-    // 3. Prevent double-tap to zoom safely without blocking button/tab clicks
+    // 3. Prevent double-tap to zoom
     let lastTouchEndTime = 0;
     document.addEventListener('touchend', (e) => {
         const now = Date.now();
         if (now - lastTouchEndTime <= 300) {
-            const tag = e.target.tagName;
-            const isClickable = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'BUTTON' || 
-                                e.target.closest('button') || e.target.closest('.nav-btn') || 
-                                e.target.closest('.sub-tab-btn') || e.target.closest('.btn-preset') ||
-                                e.target.closest('.btn-compare-preset') || e.target.closest('.btn-sort-preset') ||
-                                e.target.closest('.modal-card') || e.target.closest('.close-modal-btn');
-            if (!isClickable) {
+            if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
                 e.preventDefault();
             }
         }
