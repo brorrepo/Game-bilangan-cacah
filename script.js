@@ -1603,6 +1603,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const btnDismissPortrait = document.getElementById('btn-dismiss-portrait');
+    if (btnDismissPortrait) {
+        btnDismissPortrait.addEventListener('click', () => {
+            const overlay = document.getElementById('portrait-warning-overlay');
+            if (overlay) overlay.style.display = 'none';
+        });
+    }
+
     // INITIAL RENDER
     renderMateriTab();
     renderCompareModule();

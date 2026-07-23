@@ -38,21 +38,17 @@
 }
 
 html, body {
-    height: 100vh;
-    height: 100dvh;
-    width: 100vw;
+    min-height: 100vh;
+    min-height: 100dvh;
+    width: 100%;
     margin: 0;
     padding: 0;
-    overflow: hidden;
-    position: fixed;
-    inset: 0;
-    touch-action: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
-    user-select: none;
-    -webkit-user-select: none;
-    -webkit-touch-callout: none;
-    overscroll-behavior: none;
     background-color: var(--neo-bg);
     color: var(--neo-black);
     font-family: var(--font-body);
@@ -62,10 +58,7 @@ html, body {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    user-select: none;
-    -webkit-user-select: none;
-    -webkit-touch-callout: none;
-    touch-action: none;
+    touch-action: manipulation;
 }
 
 input, button, select, textarea, .nav-btn, .btn-preset, .digit-token-static, .digit-box, .hub-option-card, .btn-primary-lg, .btn-secondary, .btn-icon {
@@ -91,12 +84,16 @@ input, textarea {
     z-index: 10;
     display: flex;
     flex-direction: column;
-    height: 100vh;
-    height: calc(var(--vh, 1vh) * 100);
-    width: 100vw;
+    min-height: 100vh;
+    min-height: calc(var(--vh, 1vh) * 100);
+    width: 100%;
+    max-width: 100vw;
     padding: 8px 12px;
     gap: 8px;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
 }
 
 /* HEADER & NAV TABS (NEOBRUTALISM) */
