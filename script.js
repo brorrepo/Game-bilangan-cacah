@@ -1150,14 +1150,42 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    dom.btnSpeakMateri.addEventListener('click', () => {
-        if ('speechSynthesis' in window) {
-            const textToSpeak = dom.materiWordsText.textContent;
-            const utterance = new SpeechSynthesisUtterance(textToSpeak);
-            utterance.lang = 'id-ID';
-            window.speechSynthesis.speak(utterance);
+    function toggleSpeechAudio(textToSpeak, btnElement, defaultLabel) {
+        if (!('speechSynthesis' in window)) return;
+
+        if (window.speechSynthesis.speaking) {
+            window.speechSynthesis.cancel();
+            state.isSpeaking = false;
+            if (btnElement) btnElement.textContent = defaultLabel;
+            return;
         }
-    });
+
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(textToSpeak);
+        utterance.lang = 'id-ID';
+        utterance.rate = 0.9;
+
+        if (btnElement) btnElement.textContent = '⏹️ Hentikan Suara';
+
+        state.isSpeaking = true;
+
+        utterance.onend = () => {
+            state.isSpeaking = false;
+            if (btnElement) btnElement.textContent = defaultLabel;
+        };
+        utterance.onerror = () => {
+            state.isSpeaking = false;
+            if (btnElement) btnElement.textContent = defaultLabel;
+        };
+
+        window.speechSynthesis.speak(utterance);
+    }
+
+    if (dom.btnSpeakMateri) {
+        dom.btnSpeakMateri.addEventListener('click', () => {
+            toggleSpeechAudio(dom.materiWordsText.textContent, dom.btnSpeakMateri, '🔊 Dengarkan Terbilang');
+        });
+    }
 
     // --- TERBILANG PLAIN TEXT HELPER ---
     function terbilangTextPlain(nStr) {
@@ -1262,12 +1290,38 @@ document.addEventListener('DOMContentLoaded', () => {
             verdictText = `Bilangan A <strong>(${formatDots(rawA)})</strong> SAMA DENGAN Bilangan B <strong>(${formatDots(rawB)})</strong>`;
         }
 
-        if (dom.compareOpBadge) {
-            dom.compareOpBadge.textContent = op;
-            dom.compareOpBadge.style.background = opColor;
+        if (state.materiCompareSelectedOp) {
+            const chosenOp = state.materiCompareSelectedOp;
+            const isOpCorrect = chosenOp === op;
+            
+            if (dom.compareOpBadge) {
+                dom.compareOpBadge.textContent = chosenOp;
+                dom.compareOpBadge.style.background = isOpCorrect ? '#4ade80' : '#f87171';
+            }
+            if (dom.compareOpText) {
+                dom.compareOpText.textContent = chosenOp === '>' ? 'Lebih Besar Dari' : (chosenOp === '<' ? 'Lebih Kecil Dari' : 'Sama Dengan');
+            }
+
+            if (dom.compareVerdictBanner) {
+                if (isOpCorrect) {
+                    dom.compareVerdictBanner.innerHTML = `✅ <strong>TEPAT SEKALI!</strong> Pilihan operator <strong>${chosenOp}</strong> sudah benar! ${verdictText}`;
+                    dom.compareVerdictBanner.className = 'compare-verdict-banner correct-banner';
+                } else {
+                    dom.compareVerdictBanner.innerHTML = `❌ <strong>BELUM TEPAT!</strong> Anda memilih <strong>${chosenOp}</strong>. Seharusnya operator yang tepat adalah <strong>${op}</strong>. ${verdictText}`;
+                    dom.compareVerdictBanner.className = 'compare-verdict-banner wrong-banner';
+                }
+            }
+        } else {
+            if (dom.compareOpBadge) {
+                dom.compareOpBadge.textContent = '❓';
+                dom.compareOpBadge.style.background = '#fef08a';
+            }
+            if (dom.compareOpText) dom.compareOpText.textContent = 'Kotak Kosong';
+            if (dom.compareVerdictBanner) {
+                dom.compareVerdictBanner.innerHTML = `💡 <strong>PENERAPAN KONSEP:</strong> Silakan seret ATAU klik salah satu pilihan operator ( > , < , = ) di atas untuk mengisi kotak kosong ❓ di tengah.`;
+                dom.compareVerdictBanner.className = 'compare-verdict-banner';
+            }
         }
-        if (dom.compareOpText) dom.compareOpText.textContent = opText;
-        if (dom.compareVerdictBanner) dom.compareVerdictBanner.innerHTML = verdictText;
 
         const steps = [];
         const lenA = rawA.length;
@@ -1314,7 +1368,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- SUBTAB 3: MENGURUTKAN BILANGAN ENGINE ---
+    // --- SUBTAB 3: MENGURUTKAN BILANGAN ENGINE (VERTICAL TOP-TO-BOTTOM) ---
     function renderSortingModule() {
         if (!dom.sortNumInputs || dom.sortNumInputs.length === 0) return;
 
@@ -1346,8 +1400,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (dom.sortResultTitle) {
             dom.sortResultTitle.textContent = isAsc 
-                ? '🏆 HASIL URUTAN DARI TERKECIL KE TERBESAR (NAIK ↗️):' 
-                : '🏆 HASIL URUTAN DARI TERBESAR KE TERKECIL (TURUN ↘️):';
+                ? '🏆 HASIL URUTAN DARI TERKECIL KE TERBESAR (VERTIKAL KE BAWAH ⬇️):' 
+                : '🏆 HASIL URUTAN DARI TERBESAR KE TERKECIL (VERTIKAL KE BAWAH ⬇️):';
         }
 
         const cardColors = [
@@ -1362,19 +1416,19 @@ document.addEventListener('DOMContentLoaded', () => {
             items.forEach((item, rankIdx) => {
                 const theme = cardColors[rankIdx % cardColors.length];
                 html += `
-                    <div class="sorted-card-item rank-card-${rankIdx + 1}" style="background:${theme.bg}; border:2.5px solid var(--neo-black); box-shadow:4px 4px 0px #0f172a; padding:12px; border-radius:12px; min-width:180px; flex:1;">
-                        <div class="rank-header-bar" style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid var(--neo-black); padding-bottom:6px; margin-bottom:8px;">
-                            <span class="rank-badge-colored" style="background:${theme.badgeBg}; color:var(--neo-black); border:1.5px solid var(--neo-black); font-weight:900; padding:3px 10px; border-radius:6px; font-size:0.8rem;">
-                                ${theme.icon} Urutan #${rankIdx + 1}
+                    <div class="sorted-card-item rank-card-${rankIdx + 1}" style="background:${theme.bg}; border:2.5px solid var(--neo-black); box-shadow:4px 4px 0px #0f172a; padding:12px 16px; border-radius:12px; width:95%; box-sizing:border-box;">
+                        <div class="rank-header-bar" style="display:flex; justify-space-between; align-items:center; border-bottom:2px solid var(--neo-black); padding-bottom:6px; margin-bottom:8px;">
+                            <span class="rank-badge-colored" style="background:${theme.badgeBg}; color:var(--neo-black); border:1.5px solid var(--neo-black); font-weight:900; padding:3px 10px; border-radius:6px; font-size:0.85rem;">
+                                ${theme.icon} Urutan #${rankIdx + 1} (${rankIdx === 0 ? 'Paling Atas' : (rankIdx === items.length - 1 ? 'Paling Bawah' : 'Tengah')})
                             </span>
-                            <span style="font-size:0.75rem; font-weight:800; color:#475569;">(Bilangan ${item.origIdx})</span>
+                            <span style="font-size:0.8rem; font-weight:800; color:#475569;">(Input Bilangan ${item.origIdx})</span>
                         </div>
-                        <div style="font-size:1.35rem; font-weight:900; color:var(--neo-black); margin-bottom:4px;">${item.formatted}</div>
-                        <div style="font-size:0.8rem; font-weight:700; color:#334155; font-style:italic;">"${item.words}"</div>
+                        <div style="font-size:1.4rem; font-weight:900; color:var(--neo-black); margin-bottom:4px;">${item.formatted}</div>
+                        <div style="font-size:0.85rem; font-weight:700; color:#334155; font-style:italic;">"${item.words}"</div>
                     </div>
                 `;
                 if (rankIdx < items.length - 1) {
-                    html += `<div class="sort-arrow" style="font-size:1.8rem; font-weight:900; align-self:center; color:var(--neo-black);">➔</div>`;
+                    html += `<div class="sort-arrow" style="font-size:1.8rem; font-weight:900; text-align:center; margin: 4px 0; color:var(--neo-black);">👇</div>`;
                 }
             });
             dom.sortedCardsContainer.innerHTML = html;
@@ -1457,11 +1511,52 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (dom.btnSpeakCompare) {
         dom.btnSpeakCompare.addEventListener('click', () => {
-            if ('speechSynthesis' in window && dom.compareVerdictBanner) {
-                const textToSpeak = dom.compareVerdictBanner.textContent;
-                const utterance = new SpeechSynthesisUtterance(textToSpeak);
-                utterance.lang = 'id-ID';
-                window.speechSynthesis.speak(utterance);
+            if (dom.compareVerdictBanner) {
+                toggleSpeechAudio(dom.compareVerdictBanner.textContent, dom.btnSpeakCompare, '🔊 Dengarkan Penjelasan');
+            }
+        });
+    }
+
+    // MATERI SUBTAB 2 OPERATOR CONCEPT BOARD LISTENERS
+    const btnMateriOpChoices = document.querySelectorAll('.btn-materi-op-choice');
+    btnMateriOpChoices.forEach(btn => {
+        const handleMateriOpChoose = (e) => {
+            if (e) { e.preventDefault(); e.stopPropagation(); }
+            AudioEngine.play('drag');
+            const op = btn.dataset.op;
+            state.materiCompareSelectedOp = op;
+            btnMateriOpChoices.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderCompareModule();
+        };
+        btn.onpointerdown = handleMateriOpChoose;
+        btn.onclick = handleMateriOpChoose;
+    });
+
+    const btnClearCompareOp = document.getElementById('btn-clear-compare-op');
+    if (btnClearCompareOp) {
+        btnClearCompareOp.addEventListener('click', () => {
+            AudioEngine.play('drag');
+            state.materiCompareSelectedOp = null;
+            btnMateriOpChoices.forEach(b => b.classList.remove('active'));
+            renderCompareModule();
+        });
+    }
+
+    // GLOBAL REFRESH BUTTON LISTENER
+    const btnGlobalRefresh = document.getElementById('btn-global-refresh');
+    if (btnGlobalRefresh) {
+        btnGlobalRefresh.addEventListener('click', () => {
+            AudioEngine.play('drag');
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            initBattle();
+            renderMateriTab();
+            renderCompareModule();
+            renderSortingModule();
+            if (dom.p1Feedback) {
+                dom.p1Feedback.textContent = '🔄 Aplikasi & Permainan Berhasil Di-refresh!';
+                dom.p1Feedback.className = 'feedback-msg correct';
+                setTimeout(() => { dom.p1Feedback.textContent = ''; }, 2500);
             }
         });
     }

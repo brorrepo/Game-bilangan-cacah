@@ -50,7 +50,7 @@
 
             <div class="header-actions">
                 <button id="btn-home-menu" class="btn-secondary" title="Kembali ke Menu Utama">🏠 Menu Utama</button>
-                <button id="btn-restart-battle-top" class="btn-secondary btn-restart" title="Mengulang Game Battle">🔄 Ulang Battle</button>
+                <button id="btn-global-refresh" class="btn-secondary btn-restart" title="Refresh Aplikasi & Reset Game">🔄 REFRESH</button>
                 <button id="btn-sound" class="btn-icon" title="Toggle Suara">🔊</button>
                 <button id="btn-cert" class="btn-secondary">📜 Sertifikat</button>
             </div>
@@ -63,140 +63,132 @@
             <main class="battle-arena">
                 
                 <!-- PLAYER 1 ZONE (LEFT) -->
-                <section class="player-zone p1-zone">
+                <div class="player-zone p1-zone">
                     <div class="player-header">
-                        <div class="player-tag">
-                            <span class="avatar">🎮</span>
-                            <span id="p1-display-name">Pemain 1</span>
+                        <div class="player-badge p1-badge">
+                            <span>🎮</span> <span id="p1-display-name">PEMAIN 1</span>
                         </div>
-                        <div class="p-round-badge p1-badge">RONDE <span id="p1-round-disp">1</span>/<span class="total-rounds-disp">5</span></div>
                         <div class="score-pill">
-                            <span class="score-label">POIN</span>
+                            <span class="score-label">SKOR:</span>
                             <span class="score-val" id="p1-score">0</span>
                         </div>
                     </div>
 
-                    <!-- SINGLE SOAL CARD -->
-                    <div class="single-soal-card p1-soal-card">
+                    <div class="single-soal-card">
                         <div class="q-label-bar">
-                            <span id="p1-cat-tag">🎯 SOAL PEMAIN 1</span>
-                            <span class="mode-tag-pill" id="p1-mode-tag">Ribuan</span>
+                            <span id="p1-cat-tag" class="cat-tag">🧮 NILAI TEMPAT</span>
+                            <span class="mode-tag-pill" id="p1-mode-tag">TRILIUNAN</span>
+                            <span class="round-badge">RONDE <span id="p1-round-disp">1</span>/<span class="total-rounds-disp">3</span></span>
                         </div>
-                        <div class="main-number-disp" id="p1-target-number">...</div>
-                        <div class="q-instruction" id="p1-instruction">Seret ATAU Klik angka 0-9 di tengah, lalu isi kotak nilai tempat!</div>
+                        <div class="main-number-disp" id="p1-target-num">12.345.678.901</div>
+                        <p class="q-instruction" id="p1-instruction">Seret ATAU Klik angka 0-9 di tengah, lalu isi kotak nilai tempat!</p>
 
-                        <!-- CATEGORY 1: DIGIT PLACE VALUE TARGET BOXES GRID -->
+                        <!-- CATEGORY 1: DIGIT PLACE VALUE GRID -->
                         <div class="digit-boxes-grid" id="p1-digit-grid"></div>
 
-                        <!-- CATEGORY 2: COMPARE OPERATOR CHOICES CONTAINER -->
-                        <div class="compare-choices-grid" id="p1-compare-grid" style="display:none;">
-                            <button class="btn-op-choice p1-op-choice" data-op=">">&gt; (Lebih Besar)</button>
-                            <button class="btn-op-choice p1-op-choice" data-op="<">&lt; (Lebih Kecil)</button>
-                            <button class="btn-op-choice p1-op-choice" data-op="=">= (Sama)</button>
+                        <!-- CATEGORY 2: MEMBANDINGKAN GRID -->
+                        <div class="compare-battle-grid" id="p1-compare-grid" style="display: none;">
+                            <div class="compare-choices-grid">
+                                <button class="btn-op-choice" data-op=">">Lebih Besar ( &gt; )</button>
+                                <button class="btn-op-choice" data-op="<">Lebih Kecil ( &lt; )</button>
+                                <button class="btn-op-choice" data-op="=">Sama Dengan ( = )</button>
+                            </div>
                         </div>
 
-                        <!-- CATEGORY 3: SORTING NUMBERS CONTAINER (VERTICAL KE BAWAH) -->
-                        <div class="sorting-battle-grid" id="p1-sort-grid" style="display:none;">
-                            <div class="sort-dir-badge" id="p1-sort-badge">↗️ TERKECIL KE TERBESAR</div>
+                        <!-- CATEGORY 3: MENGURUTKAN GRID (VERTICAL KE BAWAH) -->
+                        <div class="sorting-battle-grid" id="p1-sort-grid" style="display: none;">
+                            <div class="sort-dir-badge asc" id="p1-sort-badge">↗️ TERKECIL KE TERBESAR</div>
                             <div class="sort-target-slots-vertical" id="p1-sort-slots"></div>
                             <div class="sort-unplaced-pool-vertical" id="p1-sort-pool"></div>
                         </div>
 
-                        <!-- ACTION & FEEDBACK -->
                         <div class="player-actions-bar">
-                            <button id="p1-btn-check" class="btn-check-answer p1-btn-check">✔️ CEK JAWABAN P1</button>
-                            <div class="feedback-msg" id="p1-feedback"></div>
+                            <button id="p1-btn-check" class="btn-primary-lg btn-check-answer p1-btn-check">✔️ CEK JAWABAN</button>
+                            <div id="p1-feedback" class="feedback-msg"></div>
                         </div>
                     </div>
-                </section>
+                </div>
 
-                <!-- SHARED CENTER ARENA (STATIC DIGITS 0-9 GRID - DUAL SELECTION) -->
-                <section class="center-pool-zone">
-                    <div class="center-header-bar">
-                        <div class="battle-title-badge">⚔️ BATTLE ARENA</div>
-                        <button id="btn-restart-battle-center" class="btn-restart-sm">🔄 ULANG</button>
+                <!-- CENTER POOL ZONE (SHARED NUMBERS FOR NILAI TEMPAT) -->
+                <div class="center-pool-zone">
+                    <div class="pool-header">
+                        <span class="pool-title">🔤 ANGKAPOOL</span>
                     </div>
-                    
-                    <div class="pool-instruction" id="center-pool-instruction">⚡ GAME CEPAT-CEPATAN! 2 PEMAIN BISA NGGESER BERSAMAAN ⚡</div>
-                    
-                    <!-- FIXED DIGITS 0-9 GRID -->
-                    <div id="center-tokens-container" class="static-digits-grid"></div>
 
-                    <!-- DUAL PLAYER INDEPENDENT SELECTION INDICATORS -->
+                    <div class="pool-instruction" id="center-pool-instruction">
+                        ⚡ ADU CEPAT! 2 PEMAIN BISA MEMILIH ANGKA BERSAMAAN ⚡
+                    </div>
+
+                    <!-- STATIC DIGITS 0-9 GRID -->
+                    <div class="static-digits-grid" id="center-tokens-container"></div>
+
                     <div class="selected-digit-indicators-dual" id="center-selection-indicators">
-                        <div class="p1-selected-pill">
-                            🎮 P1: <span id="p1-selected-digit-val">-</span>
-                        </div>
-                        <div class="p2-selected-pill">
-                            🕹️ P2: <span id="p2-selected-digit-val">-</span>
-                        </div>
+                        <div class="p1-selected-pill">P1: <span id="p1-selected-digit-val">-</span></div>
+                        <div class="p2-selected-pill">P2: <span id="p2-selected-digit-val">-</span></div>
                     </div>
-                </section>
+                </div>
 
                 <!-- PLAYER 2 ZONE (RIGHT) -->
-                <section class="player-zone p2-zone">
+                <div class="player-zone p2-zone">
                     <div class="player-header">
-                        <div class="player-tag">
-                            <span class="avatar">🕹️</span>
-                            <span id="p2-display-name">Pemain 2</span>
-                        </div>
-                        <div class="p-round-badge p2-badge">RONDE <span id="p2-round-disp">1</span>/<span class="total-rounds-disp">5</span></div>
                         <div class="score-pill">
-                            <span class="score-label">POIN</span>
+                            <span class="score-label">SKOR:</span>
                             <span class="score-val" id="p2-score">0</span>
+                        </div>
+                        <div class="player-badge p2-badge">
+                            <span id="p2-display-name">PEMAIN 2</span> <span>🕹️</span>
                         </div>
                     </div>
 
-                    <!-- SINGLE SOAL CARD -->
-                    <div class="single-soal-card p2-soal-card">
+                    <div class="single-soal-card">
                         <div class="q-label-bar">
-                            <span id="p2-cat-tag">🎯 SOAL PEMAIN 2</span>
-                            <span class="mode-tag-pill" id="p2-mode-tag">Ribuan</span>
+                            <span id="p2-cat-tag" class="cat-tag">🧮 NILAI TEMPAT</span>
+                            <span class="mode-tag-pill" id="p2-mode-tag">TRILIUNAN</span>
+                            <span class="round-badge">RONDE <span id="p2-round-disp">1</span>/<span class="total-rounds-disp">3</span></span>
                         </div>
-                        <div class="main-number-disp" id="p2-target-number">...</div>
-                        <div class="q-instruction" id="p2-instruction">Seret ATAU Klik angka 0-9 di tengah, lalu isi kotak nilai tempat!</div>
+                        <div class="main-number-disp" id="p2-target-num">98.765.432.109</div>
+                        <p class="q-instruction" id="p2-instruction">Seret ATAU Klik angka 0-9 di tengah, lalu isi kotak nilai tempat!</p>
 
-                        <!-- CATEGORY 1: DIGIT PLACE VALUE TARGET BOXES GRID -->
+                        <!-- CATEGORY 1: DIGIT PLACE VALUE GRID -->
                         <div class="digit-boxes-grid" id="p2-digit-grid"></div>
 
-                        <!-- CATEGORY 2: COMPARE OPERATOR CHOICES CONTAINER -->
-                        <div class="compare-choices-grid" id="p2-compare-grid" style="display:none;">
-                            <button class="btn-op-choice p2-op-choice" data-op=">">&gt; (Lebih Besar)</button>
-                            <button class="btn-op-choice p2-op-choice" data-op="<">&lt; (Lebih Kecil)</button>
-                            <button class="btn-op-choice p2-op-choice" data-op="=">= (Sama)</button>
+                        <!-- CATEGORY 2: MEMBANDINGKAN GRID -->
+                        <div class="compare-battle-grid" id="p2-compare-grid" style="display: none;">
+                            <div class="compare-choices-grid">
+                                <button class="btn-op-choice" data-op=">">Lebih Besar ( &gt; )</button>
+                                <button class="btn-op-choice" data-op="<">Lebih Kecil ( &lt; )</button>
+                                <button class="btn-op-choice" data-op="=">Sama Dengan ( = )</button>
+                            </div>
                         </div>
 
-                        <!-- CATEGORY 3: SORTING NUMBERS CONTAINER (VERTICAL KE BAWAH) -->
-                        <div class="sorting-battle-grid" id="p2-sort-grid" style="display:none;">
-                            <div class="sort-dir-badge" id="p2-sort-badge">↗️ TERKECIL KE TERBESAR</div>
+                        <!-- CATEGORY 3: MENGURUTKAN GRID (VERTICAL KE BAWAH) -->
+                        <div class="sorting-battle-grid" id="p2-sort-grid" style="display: none;">
+                            <div class="sort-dir-badge asc" id="p2-sort-badge">↗️ TERKECIL KE TERBESAR</div>
                             <div class="sort-target-slots-vertical" id="p2-sort-slots"></div>
                             <div class="sort-unplaced-pool-vertical" id="p2-sort-pool"></div>
                         </div>
 
-                        <!-- ACTION & FEEDBACK -->
                         <div class="player-actions-bar">
-                            <button id="p2-btn-check" class="btn-check-answer p2-btn-check">✔️ CEK JAWABAN P2</button>
-                            <div class="feedback-msg" id="p2-feedback"></div>
+                            <button id="p2-btn-check" class="btn-primary-lg btn-check-answer p2-btn-check">✔️ CEK JAWABAN</button>
+                            <div id="p2-feedback" class="feedback-msg"></div>
                         </div>
                     </div>
-                </section>
+                </div>
 
             </main>
         </section>
 
-        <!-- CONTENT TAB 2: MATERI GURU -->
+        <!-- CONTENT TAB 2: MATERI GURU INTERAKTIF -->
         <section id="tab-materi" class="tab-content">
             <div class="materi-card">
                 <div class="materi-header">
-                    <div>
-                        <h2>📚 MATERI INTERAKTIF GURU SD 96/IV KOTA JAMBI</h2>
-                        <p>Modul interaktif pembacaan, perbandingan, dan pengurutan bilangan cacah hingga triliunan.</p>
-                    </div>
+                    <h2>📚 MODUL INTERAKTIF GURU (KURIKULUM MERDEKA)</h2>
+                    <span class="materi-badge">SD 96/IV KOTA JAMBI</span>
                 </div>
 
-                <!-- MATERI SUB-NAVIGATION TABS -->
+                <!-- MATERI SUB-NAV TABS -->
                 <div class="materi-sub-tabs">
-                    <button class="sub-tab-btn active" data-subtab="subtab-dekomposisi">🧮 1. Dekomposisi & Terbilang</button>
+                    <button class="sub-tab-btn active" data-subtab="subtab-dekomposisi">🧮 1. Dekomposisi &amp; Terbilang</button>
                     <button class="sub-tab-btn" data-subtab="subtab-banding">⚖️ 2. Membandingkan Bilangan</button>
                     <button class="sub-tab-btn" data-subtab="subtab-urut">🔢 3. Mengurutkan Bilangan</button>
                 </div>
@@ -204,53 +196,40 @@
                 <!-- SUB-TAB 1: DEKOMPOSISI & TERBILANG -->
                 <div id="subtab-dekomposisi" class="materi-sub-content active">
                     <div class="materi-action-bar-top">
-                        <span class="subtab-desc">Ketikkan bilangan di bawah ini untuk melihat terjemahan kata & dekomposisi nilai tempat!</span>
-                        <button id="btn-speak-materi" class="btn-primary-lg btn-sm-inline">🔊 Dengarkan Pengucapan</button>
+                        <span class="subtab-desc">Ketik bilangan cacah (hingga Triliunan) pada kolom di bawah untuk membedah nilai tempat dan bentuk panjang.</span>
+                        <button id="btn-speak-materi" class="btn-primary-lg btn-sm-inline">🔊 Dengarkan Terbilang</button>
                     </div>
 
-                    <!-- TEACHER INPUT SECTION -->
                     <div class="teacher-input-card">
-                        <label>✍️ MASUKKAN ANGKA MATERI GURU:</label>
-                        <div class="input-with-presets">
-                            <input type="text" id="materi-num-input" value="234.050.000.000" maxlength="20" inputmode="numeric" pattern="[0-9]*" placeholder="Ketik angka di sini...">
-                        </div>
-
-                        <!-- PRESET EXAMPLES FOR TEACHING -->
-                        <div class="preset-pills">
-                            <span class="preset-label">💡 Contoh Cepat Materi:</span>
-                            <button class="btn-preset" data-num="250.000.000">📌 250 Juta</button>
-                            <button class="btn-preset" data-num="1.500.000.000">📌 1,5 Miliar</button>
-                            <button class="btn-preset" data-num="234.050.000.000">📌 234 Miliar 50 Juta</button>
-                            <button class="btn-preset" data-num="3.450.000.000.000">📌 3,45 Triliun</button>
-                            <button class="btn-preset" data-num="3.325.000.000.000">📌 APBN 3,325 Triliun</button>
-                        </div>
+                        <label for="materi-num-input"><strong>Ketikkan Bilangan Cacah:</strong></label>
+                        <input type="text" id="materi-num-input" value="12.345.678.901" maxlength="24" inputmode="numeric" pattern="[0-9]*" placeholder="Ketikkan angka di sini...">
                     </div>
 
-                    <!-- COLOR-CODED LIVE INDONESIAN TRANSLATION CARD -->
-                    <div class="materi-box translation-box">
-                        <div class="materi-box-title">📖 TERJEMAHAN BAHASA INDONESIA (DENGAN WARNA NILAI TEMPAT):</div>
-                        <div class="materi-translation-text" id="materi-words-text">...</div>
-                        <div class="color-legend-bar">
-                            <span class="legend-item" style="color: #a855f7">🟣 Triliun</span>
-                            <span class="legend-item" style="color: #06b6d4">🔵 Miliar</span>
-                            <span class="legend-item" style="color: #10b981">🟢 Juta</span>
-                            <span class="legend-item" style="color: #f59e0b">🟡 Ribu</span>
-                            <span class="legend-item" style="color: #f97316">🟠 Satuan</span>
-                        </div>
+                    <div class="materi-presets-bar">
+                        <span class="preset-label">💡 Contoh Cepat Guru:</span>
+                        <button class="btn-preset" data-num="500">💯 Ratusan (500)</button>
+                        <button class="btn-preset" data-num="75000">⚡ Puluhan Ribu (75.000)</button>
+                        <button class="btn-preset" data-num="45000000">🌟 Puluhan Juta (45.000.000)</button>
+                        <button class="btn-preset" data-num="2500000000">🏆 Miliar (2.500.000.000)</button>
+                        <button class="btn-preset" data-num="123456789012">💎 Triliun (123.456.789.012)</button>
                     </div>
 
-                    <!-- PLACE VALUE TABLE BREAKDOWN -->
+                    <!-- 1. COLOR-CODED TERJEMAHAN BAHASA INDONESIA -->
                     <div class="materi-box">
-                        <div class="materi-box-title">🧮 DEKOMPOSISI NILAI TEMPAT LENGKAP:</div>
-                        <div class="matrix-scroll-wrapper">
-                            <div class="matrix-grid" id="materi-matrix-grid"></div>
-                        </div>
+                        <div class="materi-box-title">🗣️ CARA MEMBACA / TERBILANG (COLOR-CODED PER KELOMPOK):</div>
+                        <div class="words-display-box" id="materi-words-text">...</div>
                     </div>
 
-                    <!-- EXPANDED NOTATION -->
-                    <div class="materi-box expansion-box">
-                        <div class="materi-box-title">📐 BENTUK EKSPANSI (NOTASI MATEMATIS):</div>
-                        <div class="readout-text code-font" id="materi-expansion-text">...</div>
+                    <!-- 2. PLACE VALUE BREAKDOWN MATRIX -->
+                    <div class="materi-box">
+                        <div class="materi-box-title">📊 TABEL DEKOMPOSISI NILAI TEMPAT (15 KOLOM):</div>
+                        <div class="matrix-grid-container" id="materi-matrix-grid"></div>
+                    </div>
+
+                    <!-- 3. EXPANDED FORM NOTATION -->
+                    <div class="materi-box">
+                        <div class="materi-box-title">➕ BENTUK NOTASI PANJANG (EXPANDED NOTATION):</div>
+                        <div class="expansion-display-box" id="materi-expansion-text">...</div>
                     </div>
                 </div>
 
@@ -260,12 +239,22 @@
                         <div class="module-title-bar">
                             <div>
                                 <h3>⚖️ MODUL INTERAKTIF MEMBANDINGKAN DUA BILANGAN</h3>
-                                <p class="subtab-desc">Bandingkan dua bilangan besar untuk menentukan hubungan lebih besar (&gt;), lebih kecil (&lt;), atau sama dengan (=).</p>
+                                <p class="subtab-desc">Pilih/seret operator perbandingan di atas untuk mengisi kotak kosong di antara Bilangan A dan Bilangan B.</p>
                             </div>
                             <button id="btn-speak-compare" class="btn-primary-lg btn-sm-inline">🔊 Dengarkan Penjelasan</button>
                         </div>
 
-                        <!-- INPUT COMPARISON CARDS -->
+                        <!-- TOP OPERATOR SELECTION BOARD (PENERAPAN KONSEP) -->
+                        <div class="operator-choice-header">
+                            <span class="preset-label">👉 Pilihan Operator Perbandingan (Seret ATAU Klik untuk Memilih):</span>
+                            <div class="operator-badges-row">
+                                <button class="btn-materi-op-choice" data-op=">">Lebih Besar Dari ( &gt; )</button>
+                                <button class="btn-materi-op-choice" data-op="<">Lebih Kecil Dari ( &lt; )</button>
+                                <button class="btn-materi-op-choice" data-op="=">Sama Dengan ( = )</button>
+                            </div>
+                        </div>
+
+                        <!-- INPUT COMPARISON CARDS WITH MIDDLE EMPTY BOX -->
                         <div class="compare-inputs-grid">
                             <div class="compare-side-card card-a">
                                 <span class="side-badge badge-p1">BILANGAN A</span>
@@ -274,8 +263,9 @@
                             </div>
 
                             <div class="compare-operator-container">
-                                <div class="op-badge-glowing" id="compare-op-badge">&gt;</div>
-                                <span class="op-label" id="compare-op-text">Lebih Besar Dari</span>
+                                <div class="op-badge-glowing empty-target-box" id="compare-op-badge" title="Klik/seret operator dari atas ke sini">❓</div>
+                                <span class="op-label" id="compare-op-text">Kotak Kosong</span>
+                                <button id="btn-clear-compare-op" class="btn-secondary" style="font-size: 0.72rem; padding: 3px 8px; margin-top: 4px;" title="Reset Operator">🗑️ Hapus / Reset</button>
                             </div>
 
                             <div class="compare-side-card card-b">

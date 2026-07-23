@@ -1667,12 +1667,56 @@ input, textarea {
     font-size: 1.05rem;
 }
 
+.operator-choice-header {
+    background: #fef08a;
+    border: 2px solid var(--neo-black);
+    box-shadow: 2px 2px 0px #0f172a;
+    padding: 10px 14px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.operator-badges-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.btn-materi-op-choice {
+    background: var(--neo-white);
+    border: 2.5px solid var(--neo-black);
+    box-shadow: 3px 3px 0px #0f172a;
+    color: var(--neo-black);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    font-weight: 900;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    touch-action: manipulation;
+}
+
+.btn-materi-op-choice:hover {
+    background: var(--neo-cyan);
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0px #0f172a;
+}
+
+.btn-materi-op-choice.active {
+    background: var(--neo-yellow);
+    box-shadow: inset 0 0 0 3px var(--neo-black);
+}
+
 .sorted-cards-container {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     margin-top: 8px;
+    width: 100%;
 }
 
 .sorted-card-item {
@@ -1684,8 +1728,8 @@ input, textarea {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    flex: 1;
-    min-width: 140px;
+    width: 95%;
+    box-sizing: border-box;
 }
 
 .rank-badge {
