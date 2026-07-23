@@ -531,6 +531,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 sortDir: qData.sortDir,
                 pool: [...qData.pool],
                 targetSlots: [],
+                expectedSorted: [...qData.expectedSorted],
                 isComplete: false
             };
         }
@@ -971,11 +972,13 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (question.category === 'mengurutkan') {
             if (question.targetSlots.length < 3) {
                 AudioEngine.play('wrong');
-                feedbackEl.textContent = '⚠️ Susun ketiga bilangan ke dalam urutan #1, #2, dan #3!';
+                feedbackEl.textContent = '⚠️ Susun 3 bilangan ke dalam urutan #1, #2, dan #3!';
                 feedbackEl.className = 'feedback-msg wrong';
                 return;
             }
-            isAllCorrect = question.targetSlots.every((val, idx) => val === question.expectedSorted[idx]);
+            const placedBigInts = question.targetSlots.map(s => BigInt(s.replace(/\D/g, '') || '0'));
+            const expectedBigInts = (question.expectedSorted || []).map(s => BigInt(s.replace(/\D/g, '') || '0'));
+            isAllCorrect = placedBigInts.every((val, idx) => val === expectedBigInts[idx]);
         }
 
         renderPlayerSingleSoal(pKey, question);
@@ -1004,18 +1007,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     state.p2Question = buildPlayerQuestionFromSeq('p2', state.p2CurrentRound - 1);
                 }
 
-                feedbackEl.textContent = `🔥 BENAR! +${roundPoin} POIN! Otomatis lanjut ke RONDE ${currentRound + 1}...`;
+                feedbackEl.innerHTML = `⚡ <strong>BENAR! (+${roundPoin} POIN)</strong> <span class="loading-spin-badge">⏳ Memuat Ronde ${currentRound + 1}...</span>`;
                 feedbackEl.className = 'feedback-msg correct';
 
                 setTimeout(() => {
                     feedbackEl.textContent = '';
                     renderPlayerSingleSoal(pKey, pKey === 'p1' ? state.p1Question : state.p2Question);
-                }, 600);
+                }, 400);
             } else {
                 if (pKey === 'p1') state.p1FinishedAll = true;
                 else state.p2FinishedAll = true;
 
-                feedbackEl.textContent = '🎉 BENAR! KAMU SUDAH MENYELESAIKAN SEMUA RONDE!';
+                feedbackEl.innerHTML = `🎉 <strong>BENAR! (+${roundPoin} POIN)</strong> 🏆 SEMUA RONDE SELESAI!`;
                 feedbackEl.className = 'feedback-msg correct';
 
                 checkEndGame();
