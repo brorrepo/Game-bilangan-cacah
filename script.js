@@ -140,6 +140,16 @@ document.addEventListener('DOMContentLoaded', () => {
         btnRandomCompare: document.getElementById('btn-random-compare'),
         comparePresets: document.querySelectorAll('.btn-compare-preset'),
 
+        // Subtab 2 Practice Board (Guru & Siswa)
+        practiceNumA: document.getElementById('practice-num-a'),
+        practiceNumB: document.getElementById('practice-num-b'),
+        practiceWordsA: document.getElementById('practice-words-a'),
+        practiceWordsB: document.getElementById('practice-words-b'),
+        practiceSymbolSlot: document.getElementById('practice-symbol-slot'),
+        practiceFeedback: document.getElementById('practice-feedback'),
+        btnPracticeReset: document.getElementById('btn-practice-reset'),
+        draggableSymbols: document.querySelectorAll('.draggable-symbol-card'),
+
         // Subtab 3 Mengurutkan Bilangan
         sortNumInputs: document.querySelectorAll('.sort-num-input'),
         btnSortDirs: document.querySelectorAll('.btn-sort-dir'),
@@ -147,7 +157,17 @@ document.addEventListener('DOMContentLoaded', () => {
         sortPresets: document.querySelectorAll('.btn-sort-preset'),
         sortResultTitle: document.getElementById('sort-result-title'),
         sortedCardsContainer: document.getElementById('sorted-cards-container'),
-        sortAnalysisSteps: document.getElementById('sort-analysis-steps')
+        sortAnalysisSteps: document.getElementById('sort-analysis-steps'),
+
+        // Subtab 3 Practice Sort Board (Guru & Siswa)
+        practiceSortInputs: document.querySelectorAll('.practice-sort-in'),
+        btnPracticeSortDirs: document.querySelectorAll('.btn-practice-sort-dir'),
+        practiceSortDirBadge: document.getElementById('practice-sort-dir-badge'),
+        practiceSortTargetSlots: document.getElementById('practice-sort-target-slots'),
+        practiceSortUnplacedPool: document.getElementById('practice-sort-unplaced-pool'),
+        btnPracticeSortCheck: document.getElementById('btn-practice-sort-check'),
+        btnPracticeSortReset: document.getElementById('btn-practice-sort-reset'),
+        practiceSortFeedback: document.getElementById('practice-sort-feedback')
     };
 
     // --- AUDIO SYNTH ENGINE ---
@@ -255,11 +275,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 else str += satuan[ratus] + ' Ratus ';
                 num %= 100;
             }
-            if (num >= 12) {
+            if (num >= 20) {
                 const puluh = Math.floor(num / 10);
                 str += satuan[puluh] + ' Puluh ';
                 num %= 10;
                 if (num > 0) str += satuan[num] + ' ';
+            } else if (num >= 12 && num <= 19) {
+                str += satuan[num - 10] + ' Belas ';
             } else if (num > 0) {
                 str += satuan[num] + ' ';
             }
@@ -1193,11 +1215,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 else str += satuan[ratus] + ' Ratus ';
                 num %= 100;
             }
-            if (num >= 12) {
+            if (num >= 20) {
                 const puluh = Math.floor(num / 10);
                 str += satuan[puluh] + ' Puluh ';
                 num %= 10;
                 if (num > 0) str += satuan[num] + ' ';
+            } else if (num >= 12 && num <= 19) {
+                str += satuan[num - 10] + ' Belas ';
             } else if (num > 0) {
                 str += satuan[num] + ' ';
             }
@@ -1332,6 +1356,324 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // --- PRACTICE COMPARE BOARD (GURU & PESERTA DIDIK) ENGINE ---
+    let currentPracticeSymbol = null;
+
+    function handlePracticeNumInput() {
+        if (!dom.practiceNumA || !dom.practiceNumB) return;
+
+        const rawAClean = dom.practiceNumA.value.replace(/\D/g, '');
+        const rawBClean = dom.practiceNumB.value.replace(/\D/g, '');
+
+        dom.practiceNumA.value = rawAClean === '' ? '' : formatDots(rawAClean);
+        dom.practiceNumB.value = rawBClean === '' ? '' : formatDots(rawBClean);
+
+        if (dom.practiceWordsA) {
+            dom.practiceWordsA.textContent = rawAClean === '' ? 'Nol' : terbilangTextPlain(rawAClean);
+        }
+        if (dom.practiceWordsB) {
+            dom.practiceWordsB.textContent = rawBClean === '' ? 'Nol' : terbilangTextPlain(rawBClean);
+        }
+
+        if (currentPracticeSymbol) {
+            evaluatePracticeAnswer(currentPracticeSymbol);
+        }
+    }
+
+    function evaluatePracticeAnswer(placedSymbol) {
+        if (!dom.practiceSymbolSlot || !dom.practiceFeedback) return;
+
+        currentPracticeSymbol = placedSymbol;
+
+        const rawA = (dom.practiceNumA ? dom.practiceNumA.value.replace(/\D/g, '') : '') || '0';
+        const rawB = (dom.practiceNumB ? dom.practiceNumB.value.replace(/\D/g, '') : '') || '0';
+
+        const valA = BigInt(rawA);
+        const valB = BigInt(rawB);
+
+        let expectedOp = '=';
+        if (valA > valB) expectedOp = '>';
+        else if (valA < valB) expectedOp = '<';
+
+        dom.practiceSymbolSlot.innerHTML = placedSymbol;
+        dom.practiceSymbolSlot.classList.remove('drag-over', 'correct', 'wrong');
+        dom.practiceSymbolSlot.classList.add('filled');
+
+        dom.practiceFeedback.style.display = 'block';
+
+        if (placedSymbol === expectedOp) {
+            dom.practiceSymbolSlot.classList.add('correct');
+            AudioEngine.play('correct');
+            dom.practiceFeedback.className = 'practice-feedback-banner correct';
+            dom.practiceFeedback.innerHTML = `🎉 <strong>HEBAT & BENAR!</strong> Perbandingan tepat: <strong>${formatDots(rawA)} ${placedSymbol} ${formatDots(rawB)}</strong>`;
+        } else {
+            dom.practiceSymbolSlot.classList.add('wrong');
+            AudioEngine.play('wrong');
+            dom.practiceFeedback.className = 'practice-feedback-banner wrong';
+            dom.practiceFeedback.innerHTML = `❌ <strong>BELUM TEPAT!</strong> Hubungan yang benar adalah: <strong>${formatDots(rawA)} ${expectedOp} ${formatDots(rawB)}</strong>. Ayo coba lagi!`;
+        }
+    }
+
+    function resetPracticeBoard() {
+        AudioEngine.play('drag');
+        currentPracticeSymbol = null;
+
+        if (dom.practiceNumA) dom.practiceNumA.value = '';
+        if (dom.practiceNumB) dom.practiceNumB.value = '';
+
+        if (dom.practiceWordsA) dom.practiceWordsA.textContent = 'Nol';
+        if (dom.practiceWordsB) dom.practiceWordsB.textContent = 'Nol';
+
+        if (dom.practiceSymbolSlot) {
+            dom.practiceSymbolSlot.className = 'symbol-drop-slot';
+            dom.practiceSymbolSlot.innerHTML = '<span class="slot-placeholder">?</span>';
+        }
+
+        if (dom.practiceFeedback) {
+            dom.practiceFeedback.style.display = 'none';
+            dom.practiceFeedback.innerHTML = '';
+            dom.practiceFeedback.className = 'practice-feedback-banner';
+        }
+
+        if (dom.practiceNumA) dom.practiceNumA.focus();
+    }
+
+    // --- PRACTICE SORT BOARD (GURU & PESERTA DIDIK) ENGINE ---
+    let practiceSortDir = 'asc';
+    let practiceSortPlaced = [];
+
+    function handlePracticeSortInput() {
+        if (!dom.practiceSortInputs) return;
+
+        dom.practiceSortInputs.forEach(input => {
+            const rawClean = input.value.replace(/\D/g, '');
+            input.value = rawClean === '' ? '' : formatDots(rawClean);
+        });
+
+        renderPracticeSortBoard();
+    }
+
+    function getTeacherSortNumbers() {
+        const nums = [];
+        if (dom.practiceSortInputs) {
+            dom.practiceSortInputs.forEach(input => {
+                const rawClean = input.value.replace(/\D/g, '');
+                if (rawClean !== '') {
+                    nums.push(formatDots(rawClean));
+                }
+            });
+        }
+        return nums;
+    }
+
+    function renderPracticeSortBoard() {
+        const teacherNums = getTeacherSortNumbers();
+        const totalCount = Math.max(teacherNums.length, 4);
+
+        while (practiceSortPlaced.length > totalCount) practiceSortPlaced.pop();
+        practiceSortPlaced = practiceSortPlaced.map(val => (val && teacherNums.includes(val)) ? val : null);
+
+        // 1. Update Direction Badge
+        if (dom.practiceSortDirBadge) {
+            dom.practiceSortDirBadge.textContent = practiceSortDir === 'asc'
+                ? '↗️ URUTAN TERKECIL ➔ TERBESAR (VERTIKAL KE BAWAH):'
+                : '↘️ URUTAN TERBESAR ➔ TERKECIL (VERTIKAL KE BAWAH):';
+        }
+
+        // 2. Render Vertical Target Slots Column
+        if (dom.practiceSortTargetSlots) {
+            let slotsHtml = '';
+            for (let i = 0; i < totalCount; i++) {
+                const placedVal = practiceSortPlaced[i];
+                const rankText = i === 0 ? '#1 (Teratas)' : (i === totalCount - 1 ? `#${i + 1} (Terbawah)` : `#${i + 1}`);
+                
+                if (placedVal) {
+                    slotsHtml += `
+                        <div class="vertical-sort-slot filled" data-slot-idx="${i}" title="Klik untuk mengembalikan ke pilihan">
+                            <span class="slot-rank-badge">Urutan ${rankText}</span>
+                            <span class="slot-value-text">${placedVal}</span>
+                            <span style="font-size:0.8rem; font-weight:900; color:#ef4444;">✖</span>
+                        </div>
+                    `;
+                } else {
+                    slotsHtml += `
+                        <div class="vertical-sort-slot" data-slot-idx="${i}" title="Seret atau Klik angka di kanan ke sini">
+                            <span class="slot-rank-badge">Urutan ${rankText}</span>
+                            <span class="slot-empty-text">Kosong (Drop / Klik Angka di Samping)</span>
+                        </div>
+                    `;
+                }
+            }
+            dom.practiceSortTargetSlots.innerHTML = slotsHtml;
+
+            // Attach listeners to slots
+            const slotEls = dom.practiceSortTargetSlots.querySelectorAll('.vertical-sort-slot');
+            slotEls.forEach(slotEl => {
+                const slotIdx = parseInt(slotEl.dataset.slotIdx);
+
+                slotEl.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    slotEl.classList.add('drag-over');
+                });
+
+                slotEl.addEventListener('dragleave', () => {
+                    slotEl.classList.remove('drag-over');
+                });
+
+                slotEl.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    slotEl.classList.remove('drag-over');
+                    const numStr = e.dataTransfer.getData('text/plain');
+                    if (numStr && teacherNums.includes(numStr)) {
+                        const prevIdx = practiceSortPlaced.indexOf(numStr);
+                        if (prevIdx !== -1) practiceSortPlaced[prevIdx] = null;
+                        
+                        practiceSortPlaced[slotIdx] = numStr;
+                        AudioEngine.play('drag');
+                        renderPracticeSortBoard();
+                    }
+                });
+
+                slotEl.addEventListener('click', () => {
+                    if (practiceSortPlaced[slotIdx]) {
+                        AudioEngine.play('drag');
+                        practiceSortPlaced[slotIdx] = null;
+                        renderPracticeSortBoard();
+                    }
+                });
+            });
+        }
+
+        // 3. Render Unplaced Numbers Pool Column
+        if (dom.practiceSortUnplacedPool) {
+            const unplaced = teacherNums.filter(num => !practiceSortPlaced.includes(num));
+
+            if (unplaced.length === 0 && teacherNums.length > 0) {
+                dom.practiceSortUnplacedPool.innerHTML = `<div style="text-align:center; padding:16px; font-weight:800; color:#16a34a; background:#dcfce7; border-radius:10px; border:2px solid var(--neo-black);">🎉 Semua angka sudah ditempatkan di kotak urutan! Klik tombol "CEK HASIL URUTAN" di bawah.</div>`;
+            } else if (teacherNums.length === 0) {
+                dom.practiceSortUnplacedPool.innerHTML = `<div style="text-align:center; padding:16px; font-weight:800; color:#94a3b8; font-style:italic;">Silakan ketikkan 3-4 angka pada kolom input Guru di atas...</div>`;
+            } else {
+                let poolHtml = '';
+                unplaced.forEach(numStr => {
+                    poolHtml += `
+                        <div class="btn-sort-pool-item" draggable="true" data-num="${numStr}" title="Seret atau Klik untuk memasukkan ke urutan">
+                            ${numStr}
+                        </div>
+                    `;
+                });
+                dom.practiceSortUnplacedPool.innerHTML = poolHtml;
+
+                const poolItemEls = dom.practiceSortUnplacedPool.querySelectorAll('.btn-sort-pool-item');
+                poolItemEls.forEach(itemEl => {
+                    const numStr = itemEl.dataset.num;
+
+                    itemEl.addEventListener('dragstart', (e) => {
+                        e.dataTransfer.setData('text/plain', numStr);
+                        AudioEngine.play('drag');
+                    });
+
+                    itemEl.addEventListener('click', () => {
+                        const emptyIdx = practiceSortPlaced.findIndex(val => !val);
+                        if (emptyIdx !== -1) {
+                            AudioEngine.play('drag');
+                            practiceSortPlaced[emptyIdx] = numStr;
+                            renderPracticeSortBoard();
+                        }
+                    });
+                });
+            }
+        }
+    }
+
+    function evaluatePracticeSortAnswer() {
+        const teacherNums = getTeacherSortNumbers();
+        if (teacherNums.length < 2) {
+            AudioEngine.play('wrong');
+            if (dom.practiceSortFeedback) {
+                dom.practiceSortFeedback.style.display = 'block';
+                dom.practiceSortFeedback.className = 'practice-feedback-banner wrong';
+                dom.practiceSortFeedback.innerHTML = '⚠️ Guru harus mengisikan minimal 2 angka pada kolom input di atas terlebih dahulu!';
+            }
+            return;
+        }
+
+        const filledCount = practiceSortPlaced.filter(Boolean).length;
+        if (filledCount < teacherNums.length) {
+            AudioEngine.play('wrong');
+            if (dom.practiceSortFeedback) {
+                dom.practiceSortFeedback.style.display = 'block';
+                dom.practiceSortFeedback.className = 'practice-feedback-banner wrong';
+                dom.practiceSortFeedback.innerHTML = `⚠️ Susunlah semua ${teacherNums.length} angka ke dalam slot urutan di sebelah kiri terlebih dahulu!`;
+            }
+            return;
+        }
+
+        const expectedSorted = [...teacherNums].sort((a, b) => {
+            const valA = BigInt(a.replace(/\D/g, ''));
+            const valB = BigInt(b.replace(/\D/g, ''));
+            if (valA < valB) return practiceSortDir === 'asc' ? -1 : 1;
+            if (valA > valB) return practiceSortDir === 'asc' ? 1 : -1;
+            return 0;
+        });
+
+        let isCorrect = true;
+        for (let i = 0; i < teacherNums.length; i++) {
+            if (practiceSortPlaced[i] !== expectedSorted[i]) {
+                isCorrect = false;
+                break;
+            }
+        }
+
+        if (dom.practiceSortFeedback) {
+            dom.practiceSortFeedback.style.display = 'block';
+            if (isCorrect) {
+                AudioEngine.play('correct');
+                dom.practiceSortFeedback.className = 'practice-feedback-banner correct';
+                const dirLabel = practiceSortDir === 'asc' ? 'Terkecil ke Terbesar (Naik)' : 'Terbesar ke Terkecil (Turun)';
+                dom.practiceSortFeedback.innerHTML = `🎉 <strong>LUAR BIASA & BENAR!</strong> Susunan urutan vertikal ${dirLabel} sudah sangat tepat!`;
+            } else {
+                AudioEngine.play('wrong');
+                dom.practiceSortFeedback.className = 'practice-feedback-banner wrong';
+                dom.practiceSortFeedback.innerHTML = `❌ <strong>BELUM TEPAT!</strong> Coba periksa kembali nilai tempat dan digit terbanyak/terbesar setiap bilangan.`;
+            }
+        }
+
+        if (dom.practiceSortTargetSlots) {
+            const slotEls = dom.practiceSortTargetSlots.querySelectorAll('.vertical-sort-slot');
+            slotEls.forEach((slotEl, idx) => {
+                if (idx < teacherNums.length) {
+                    slotEl.classList.remove('correct', 'wrong');
+                    if (practiceSortPlaced[idx] === expectedSorted[idx]) {
+                        slotEl.classList.add('correct');
+                    } else {
+                        slotEl.classList.add('wrong');
+                    }
+                }
+            });
+        }
+    }
+
+    function resetPracticeSortBoard() {
+        AudioEngine.play('drag');
+        practiceSortPlaced = [];
+
+        if (dom.practiceSortInputs) {
+            dom.practiceSortInputs.forEach(input => input.value = '');
+        }
+
+        if (dom.practiceSortFeedback) {
+            dom.practiceSortFeedback.style.display = 'none';
+            dom.practiceSortFeedback.innerHTML = '';
+            dom.practiceSortFeedback.className = 'practice-feedback-banner';
+        }
+
+        renderPracticeSortBoard();
+
+        if (dom.practiceSortInputs && dom.practiceSortInputs[0]) {
+            dom.practiceSortInputs[0].focus();
+        }
+    }
+
     // --- SUBTAB 3: MENGURUTKAN BILANGAN ENGINE ---
     function renderSortingModule() {
         if (!dom.sortNumInputs || dom.sortNumInputs.length === 0) return;
@@ -1438,7 +1780,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (targetSub === 'subtab-dekomposisi') renderMateriTab();
                 if (targetSub === 'subtab-banding') renderCompareModule();
-                if (targetSub === 'subtab-urut') renderSortingModule();
+                if (targetSub === 'subtab-urut') {
+                    renderSortingModule();
+                    renderPracticeSortBoard();
+                }
             });
         });
     }
@@ -1480,6 +1825,57 @@ document.addEventListener('DOMContentLoaded', () => {
                 const utterance = new SpeechSynthesisUtterance(textToSpeak);
                 utterance.lang = 'id-ID';
                 window.speechSynthesis.speak(utterance);
+            }
+        });
+    }
+
+    // PRACTICE COMPARE BOARD LISTENERS (GURU & PESERTA DIDIK)
+    if (dom.practiceNumA) dom.practiceNumA.addEventListener('input', handlePracticeNumInput);
+    if (dom.practiceNumB) dom.practiceNumB.addEventListener('input', handlePracticeNumInput);
+    if (dom.btnPracticeReset) dom.btnPracticeReset.addEventListener('click', resetPracticeBoard);
+
+    if (dom.draggableSymbols) {
+        dom.draggableSymbols.forEach(card => {
+            card.addEventListener('dragstart', (e) => {
+                const symbol = card.dataset.symbol;
+                e.dataTransfer.setData('text/plain', symbol);
+                AudioEngine.play('drag');
+            });
+
+            // Click / Tap support for touch devices & quick selection
+            card.addEventListener('click', () => {
+                const symbol = card.dataset.symbol;
+                evaluatePracticeAnswer(symbol);
+            });
+        });
+    }
+
+    if (dom.practiceSymbolSlot) {
+        dom.practiceSymbolSlot.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dom.practiceSymbolSlot.classList.add('drag-over');
+        });
+
+        dom.practiceSymbolSlot.addEventListener('dragleave', () => {
+            dom.practiceSymbolSlot.classList.remove('drag-over');
+        });
+
+        dom.practiceSymbolSlot.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dom.practiceSymbolSlot.classList.remove('drag-over');
+            const symbol = e.dataTransfer.getData('text/plain');
+            if (symbol) {
+                evaluatePracticeAnswer(symbol);
+            }
+        });
+
+        // Click slot to clear symbol
+        dom.practiceSymbolSlot.addEventListener('click', () => {
+            if (currentPracticeSymbol) {
+                currentPracticeSymbol = null;
+                dom.practiceSymbolSlot.className = 'symbol-drop-slot';
+                dom.practiceSymbolSlot.innerHTML = '<span class="slot-placeholder">?</span>';
+                if (dom.practiceFeedback) dom.practiceFeedback.style.display = 'none';
             }
         });
     }
@@ -1530,6 +1926,33 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             renderSortingModule();
         });
+    }
+
+    // PRACTICE SORT LISTENERS (GURU & PESERTA DIDIK)
+    if (dom.practiceSortInputs) {
+        dom.practiceSortInputs.forEach(input => {
+            input.addEventListener('input', handlePracticeSortInput);
+        });
+    }
+
+    if (dom.btnPracticeSortDirs) {
+        dom.btnPracticeSortDirs.forEach(btn => {
+            btn.addEventListener('click', () => {
+                dom.btnPracticeSortDirs.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                practiceSortDir = btn.dataset.dir;
+                AudioEngine.play('drag');
+                renderPracticeSortBoard();
+            });
+        });
+    }
+
+    if (dom.btnPracticeSortCheck) {
+        dom.btnPracticeSortCheck.addEventListener('click', evaluatePracticeSortAnswer);
+    }
+
+    if (dom.btnPracticeSortReset) {
+        dom.btnPracticeSortReset.addEventListener('click', resetPracticeSortBoard);
     }
 
     // --- BATTLE CHECK ANSWER LISTENERS FOR SIMULTANEOUS 2-PLAYER SPEED RACE ---
@@ -1757,4 +2180,5 @@ document.addEventListener('DOMContentLoaded', () => {
     renderMateriTab();
     renderCompareModule();
     renderSortingModule();
+    renderPracticeSortBoard();
 });
