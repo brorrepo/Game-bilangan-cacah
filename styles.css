@@ -2097,3 +2097,26 @@ input, textarea {
         font-size: 1.4rem;
     }
 }
+
+/* MULTI-TOUCH FLOATING CLONE FOR SIMULTANEOUS 2-PLAYER DRAGGING */
+.floating-touch-token {
+    width: 52px;
+    height: 52px;
+    background: var(--neo-yellow);
+    border: 3px solid var(--neo-black);
+    box-shadow: 6px 6px 0px #0f172a;
+    border-radius: 12px;
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--neo-black);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    z-index: 100000;
+    pointer-events: none;
+    transform: scale(1.15);
+    opacity: 0.92;
+    touch-action: none;
+}

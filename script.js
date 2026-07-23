@@ -536,6 +536,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function placeNextEmptySlot(pKey, digitVal) {
+        const question = pKey === 'p1' ? state.p1Question : state.p2Question;
+        if (!question || question.category !== 'nilai_tempat' || question.isComplete) return;
+
+        const emptyIdx = question.targetSlots.findIndex(s => !s.filled);
+        if (emptyIdx !== -1) {
+            placeDigitInSlot(pKey, emptyIdx, digitVal);
+        } else {
+            placeDigitInSlot(pKey, 0, digitVal);
+        }
+    }
+
     function renderStaticCenterDigitsGrid() {
         if (!dom.centerTokensContainer) return;
         dom.centerTokensContainer.innerHTML = '';
@@ -543,54 +555,93 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let d = 0; d <= 9; d++) {
             const token = document.createElement('div');
             token.className = 'digit-token-static';
-            token.draggable = true;
             token.dataset.digit = d;
 
             token.innerHTML = `
                 <span class="token-digit-num">${d}</span>
                 <div class="token-tap-btns">
-                    <button class="btn-tap-p1" title="Pilih P1">P1</button>
-                    <button class="btn-tap-p2" title="Pilih P2">P2</button>
+                    <button class="btn-tap-p1" title="P1 Tap">P1</button>
+                    <button class="btn-tap-p2" title="P2 Tap">P2</button>
                 </div>
             `;
 
-            token.addEventListener('dragstart', (e) => {
-                AudioEngine.play('drag');
-                e.dataTransfer.setData('text/plain', d.toString());
-            });
-
+            // 1. Instant Tap P1 Button (Simultaneous)
             const btnP1 = token.querySelector('.btn-tap-p1');
             if (btnP1) {
-                btnP1.addEventListener('click', (e) => {
+                btnP1.addEventListener('pointerdown', (e) => {
                     e.stopPropagation();
                     AudioEngine.play('drag');
                     state.p1SelectedDigitVal = d;
                     if (dom.p1SelectedDigitValDisp) dom.p1SelectedDigitValDisp.textContent = d;
+                    placeNextEmptySlot('p1', d);
                     token.classList.add('selected-p1');
-                    setTimeout(() => token.classList.remove('selected-p1'), 500);
+                    setTimeout(() => token.classList.remove('selected-p1'), 400);
                 });
             }
 
+            // 2. Instant Tap P2 Button (Simultaneous)
             const btnP2 = token.querySelector('.btn-tap-p2');
             if (btnP2) {
-                btnP2.addEventListener('click', (e) => {
+                btnP2.addEventListener('pointerdown', (e) => {
                     e.stopPropagation();
                     AudioEngine.play('drag');
                     state.p2SelectedDigitVal = d;
                     if (dom.p2SelectedDigitValDisp) dom.p2SelectedDigitValDisp.textContent = d;
+                    placeNextEmptySlot('p2', d);
                     token.classList.add('selected-p2');
-                    setTimeout(() => token.classList.remove('selected-p2'), 500);
+                    setTimeout(() => token.classList.remove('selected-p2'), 400);
                 });
             }
 
-            token.addEventListener('click', () => {
-                AudioEngine.play('drag');
-                state.p1SelectedDigitVal = d;
-                state.p2SelectedDigitVal = d;
-                if (dom.p1SelectedDigitValDisp) dom.p1SelectedDigitValDisp.textContent = d;
-                if (dom.p2SelectedDigitValDisp) dom.p2SelectedDigitValDisp.textContent = d;
-                token.classList.add('selected-both');
-                setTimeout(() => token.classList.remove('selected-both'), 500);
+            // 3. Multi-Touch Concurrent Pointer Dragging for 2 Players
+            token.addEventListener('pointerdown', (e) => {
+                if (e.target.classList.contains('btn-tap-p1') || e.target.classList.contains('btn-tap-p2')) return;
+                
+                try {
+                    token.setPointerCapture(e.pointerId);
+                } catch (err) {}
+
+                const clone = document.createElement('div');
+                clone.className = 'floating-touch-token';
+                clone.textContent = d;
+                clone.style.left = `${e.clientX - 26}px`;
+                clone.style.top = `${e.clientY - 26}px`;
+                document.body.appendChild(clone);
+
+                const onPointerMove = (moveEvt) => {
+                    if (moveEvt.pointerId === e.pointerId) {
+                        clone.style.left = `${moveEvt.clientX - 26}px`;
+                        clone.style.top = `${moveEvt.clientY - 26}px`;
+                    }
+                };
+
+                const onPointerUp = (upEvt) => {
+                    if (upEvt.pointerId === e.pointerId) {
+                        try {
+                            token.releasePointerCapture(e.pointerId);
+                        } catch (err) {}
+                        window.removeEventListener('pointermove', onPointerMove);
+                        window.removeEventListener('pointerup', onPointerUp);
+                        window.removeEventListener('pointercancel', onPointerUp);
+                        if (clone.parentNode) clone.parentNode.removeChild(clone);
+
+                        const droppedEl = document.elementFromPoint(upEvt.clientX, upEvt.clientY);
+                        if (droppedEl) {
+                            const digitBox = droppedEl.closest('.digit-box');
+                            if (digitBox) {
+                                const pKey = digitBox.dataset.player;
+                                const slotIdx = parseInt(digitBox.dataset.slotIndex);
+                                if (pKey && !isNaN(slotIdx)) {
+                                    placeDigitInSlot(pKey, slotIdx, d);
+                                }
+                            }
+                        }
+                    }
+                };
+
+                window.addEventListener('pointermove', onPointerMove);
+                window.addEventListener('pointerup', onPointerUp);
+                window.addEventListener('pointercancel', onPointerUp);
             });
 
             dom.centerTokensContainer.appendChild(token);
