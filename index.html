@@ -263,12 +263,28 @@
 
                 <div class="mode-select">
                     <label>Pilih Jenis Soal:</label>
-                    <div class="mode-options mode-options-4">
-                        <button class="btn-mode active" data-mode="campuran">🎲 Mode Campuran (Acak Variasi)</button>
-                        <button class="btn-mode" data-mode="triliunan">💎 Mode Triliunan</button>
-                        <button class="btn-mode" data-mode="miliaran">🏆 Mode Miliaran</button>
-                        <button class="btn-mode" data-mode="jutaan">🌟 Mode Jutaan</button>
+                    <div class="mode-options mode-options-grid">
+                        <button class="btn-mode active" data-mode="campuran">🎲 Mode Campuran (Acak Level)</button>
+                        <button class="btn-mode" data-mode="ratusan">💯 Mode Ratusan</button>
                         <button class="btn-mode" data-mode="ribuan">⚡ Mode Ribuan</button>
+                        <button class="btn-mode" data-mode="puluhan_ribu">🏷️ Mode Puluhan Ribu</button>
+                        <button class="btn-mode" data-mode="ratusan_ribu">🏢 Mode Ratusan Ribu</button>
+                        <button class="btn-mode" data-mode="jutaan">🌟 Mode Jutaan</button>
+                        <button class="btn-mode" data-mode="miliaran">🏆 Mode Miliaran</button>
+                        <button class="btn-mode" data-mode="triliunan">💎 Mode Triliunan</button>
+                    </div>
+                </div>
+
+                <!-- SUB-LEVEL SELECTOR FOR MODE CAMPURAN -->
+                <div id="campuran-level-container" class="campuran-level-select">
+                    <label>🎯 Batas Maksimal Level Campuran (Puluhan/Ratusan s.d. Level Pilihan):</label>
+                    <div class="level-options">
+                        <button class="btn-campuran-level" data-level="ribuan">⚡ s.d. Ribuan</button>
+                        <button class="btn-campuran-level" data-level="puluhan_ribu">🏷️ s.d. Puluhan Ribu</button>
+                        <button class="btn-campuran-level" data-level="ratusan_ribu">🏢 s.d. Ratusan Ribu</button>
+                        <button class="btn-campuran-level" data-level="jutaan">🌟 s.d. Jutaan</button>
+                        <button class="btn-campuran-level active" data-level="miliaran">🏆 s.d. Miliaran</button>
+                        <button class="btn-campuran-level" data-level="triliunan">💎 s.d. Triliunan</button>
                     </div>
                 </div>
 

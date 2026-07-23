@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Battle State
         mode: 'campuran',
+        campuranLevel: 'miliaran',
         totalRounds: 5,
         p1Name: 'Budi',
         p2Name: 'Siti',
@@ -24,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
         p1FinishedAll: false,
         p2FinishedAll: false,
 
-        questionsSequence: [],
+        questionsSequence: { p1: [], p2: [] },
 
         // INDEPENDENT DUAL-PLAYER SELECTION STATE
         p1SelectedDigitVal: null,
@@ -89,6 +90,8 @@ document.addEventListener('DOMContentLoaded', () => {
         p1FinalScore: document.getElementById('p1-final-score'),
         p2FinalScore: document.getElementById('p2-final-score'),
         modeBtns: document.querySelectorAll('.btn-mode'),
+        campuranLevelContainer: document.getElementById('campuran-level-container'),
+        campuranLevelBtns: document.querySelectorAll('.btn-campuran-level'),
         roundBtns: document.querySelectorAll('.btn-round'),
 
         // Materi Guru Elements
@@ -325,34 +328,87 @@ document.addEventListener('DOMContentLoaded', () => {
             { key: 'ratusan', label: 'Ratusan' },
             { key: 'puluhan', label: 'Puluhan' },
             { key: 'satuan', label: 'Satuan' }
+        ],
+        ratusan: [
+            { key: 'ratusan', label: 'Ratusan' },
+            { key: 'puluhan', label: 'Puluhan' },
+            { key: 'satuan', label: 'Satuan' }
         ]
     };
 
+    const PV_LEVEL_ORDER = [
+        'ratusan',
+        'ribuan',
+        'puluhan_ribu',
+        'ratusan_ribu',
+        'jutaan',
+        'puluhan_juta',
+        'ratusan_juta',
+        'miliaran',
+        'triliunan'
+    ];
+
     function generateQuestionsSequence() {
-        const availableKeys = ['triliunan', 'miliaran', 'ratusan_juta', 'puluhan_juta', 'jutaan', 'ratusan_ribu', 'puluhan_ribu', 'ribuan'];
-        const seq = [];
+        const usedNumbers = new Set();
+        const seqP1 = [];
+        const seqP2 = [];
+
+        let allowedLevels = [];
+        if (state.mode === 'campuran') {
+            const ceilingKey = state.campuranLevel || 'miliaran';
+            const maxIdx = PV_LEVEL_ORDER.indexOf(ceilingKey);
+            allowedLevels = PV_LEVEL_ORDER.slice(0, maxIdx >= 0 ? maxIdx + 1 : PV_LEVEL_ORDER.length);
+        } else {
+            allowedLevels = [state.mode];
+        }
 
         for (let r = 1; r <= state.totalRounds; r++) {
-            let levelKey = state.mode;
+            let levelKey;
             if (state.mode === 'campuran') {
-                levelKey = availableKeys[Math.floor(Math.random() * availableKeys.length)];
+                levelKey = allowedLevels[Math.floor(Math.random() * allowedLevels.length)];
+            } else {
+                levelKey = state.mode;
             }
 
-            const pvDefList = ALL_PV_LEVELS[levelKey];
+            const pvDefList = ALL_PV_LEVELS[levelKey] || ALL_PV_LEVELS.ribuan;
             const numDigits = pvDefList.length;
 
-            const digits = [];
-            for (let i = 0; i < numDigits; i++) {
-                digits.push(i === 0 ? Math.floor(Math.random() * 9) + 1 : Math.floor(Math.random() * 10));
-            }
-            const formattedNumber = formatDots(digits.join(''));
-            seq.push({ roundNum: r, levelKey, levelName: levelKey.replace('_', ' ').toUpperCase(), formattedNumber, digits, pvDefList });
+            // Unique question for Player 1
+            let digitsP1, numStrP1, attemptsP1 = 0;
+            do {
+                digitsP1 = [];
+                for (let i = 0; i < numDigits; i++) {
+                    digitsP1.push(i === 0 ? Math.floor(Math.random() * 9) + 1 : Math.floor(Math.random() * 10));
+                }
+                numStrP1 = digitsP1.join('');
+                attemptsP1++;
+            } while (usedNumbers.has(numStrP1) && attemptsP1 < 100);
+            usedNumbers.add(numStrP1);
+
+            // Unique question for Player 2 (different from P1 and prior numbers)
+            let digitsP2, numStrP2, attemptsP2 = 0;
+            do {
+                digitsP2 = [];
+                for (let i = 0; i < numDigits; i++) {
+                    digitsP2.push(i === 0 ? Math.floor(Math.random() * 9) + 1 : Math.floor(Math.random() * 10));
+                }
+                numStrP2 = digitsP2.join('');
+                attemptsP2++;
+            } while (usedNumbers.has(numStrP2) && attemptsP2 < 100);
+            usedNumbers.add(numStrP2);
+
+            const formattedP1 = formatDots(numStrP1);
+            const formattedP2 = formatDots(numStrP2);
+
+            seqP1.push({ roundNum: r, levelKey, levelName: levelKey.replace(/_/g, ' ').toUpperCase(), formattedNumber: formattedP1, digits: digitsP1, pvDefList });
+            seqP2.push({ roundNum: r, levelKey, levelName: levelKey.replace(/_/g, ' ').toUpperCase(), formattedNumber: formattedP2, digits: digitsP2, pvDefList });
         }
-        return seq;
+
+        return { p1: seqP1, p2: seqP2 };
     }
 
     function buildPlayerQuestionFromSeq(pKey, roundIndex) {
-        const qData = state.questionsSequence[roundIndex];
+        const qData = state.questionsSequence[pKey][roundIndex];
         const targetSlots = qData.pvDefList.map((pv, idx) => ({
             pvKey: pv.key,
             label: pv.label,
@@ -739,8 +795,26 @@ document.addEventListener('DOMContentLoaded', () => {
             dom.modeBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             state.mode = btn.dataset.mode;
+
+            if (dom.campuranLevelContainer) {
+                if (state.mode === 'campuran') {
+                    dom.campuranLevelContainer.style.display = 'flex';
+                } else {
+                    dom.campuranLevelContainer.style.display = 'none';
+                }
+            }
         });
     });
+
+    if (dom.campuranLevelBtns) {
+        dom.campuranLevelBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                dom.campuranLevelBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                state.campuranLevel = btn.dataset.level;
+            });
+        });
+    }
 
     dom.roundBtns.forEach(btn => {
         btn.addEventListener('click', () => {

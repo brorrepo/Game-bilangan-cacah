@@ -970,10 +970,54 @@ input, textarea {
     font-size: 0.85rem;
 }
 
-.mode-options-4 {
+.mode-options-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    gap: 6px;
+}
+
+.campuran-level-select {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+    background: #e0f2fe;
+    border: 2px solid var(--neo-black);
+    padding: 8px;
+    border-radius: 10px;
+}
+
+.campuran-level-select label {
+    font-size: 0.72rem;
+    color: var(--neo-black);
+    font-weight: 800;
+    font-family: var(--font-heading);
+}
+
+.level-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+
+.btn-campuran-level {
+    background: var(--neo-white);
+    border: 2px solid var(--neo-black);
+    box-shadow: 2px 2px 0px #0f172a;
+    color: var(--neo-black);
+    padding: 6px 4px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 0.7rem;
+    font-family: var(--font-heading);
+    transition: all 0.15s ease;
+}
+
+.btn-campuran-level.active {
+    background: var(--neo-yellow);
+    box-shadow: 3px 3px 0px #0f172a;
+    transform: translate(-1px, -1px);
 }
 
 .btn-mode {
