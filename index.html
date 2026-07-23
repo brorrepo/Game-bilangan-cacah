@@ -78,14 +78,27 @@
                     <!-- SINGLE SOAL CARD -->
                     <div class="single-soal-card p1-soal-card">
                         <div class="q-label-bar">
-                            <span>🎯 SOAL PEMAIN 1</span>
+                            <span id="p1-cat-tag">🎯 SOAL PEMAIN 1</span>
                             <span class="mode-tag-pill" id="p1-mode-tag">Ribuan</span>
                         </div>
                         <div class="main-number-disp" id="p1-target-number">...</div>
-                        <div class="q-instruction">Seret ATAU Klik angka 0-9 di tengah, lalu isi kotak nilai tempat!</div>
+                        <div class="q-instruction" id="p1-instruction">Seret ATAU Klik angka 0-9 di tengah, lalu isi kotak nilai tempat!</div>
 
-                        <!-- DIGIT PLACE VALUE TARGET BOXES GRID -->
+                        <!-- CATEGORY 1: DIGIT PLACE VALUE TARGET BOXES GRID -->
                         <div class="digit-boxes-grid" id="p1-digit-grid"></div>
+
+                        <!-- CATEGORY 2: COMPARE OPERATOR CHOICES CONTAINER -->
+                        <div class="compare-choices-grid" id="p1-compare-grid" style="display:none;">
+                            <button class="btn-op-choice p1-op-choice" data-op=">">&gt; (Lebih Besar)</button>
+                            <button class="btn-op-choice p1-op-choice" data-op="<">&lt; (Lebih Kecil)</button>
+                            <button class="btn-op-choice p1-op-choice" data-op="=">= (Sama)</button>
+                        </div>
+
+                        <!-- CATEGORY 3: SORTING NUMBERS CONTAINER -->
+                        <div class="sorting-battle-grid" id="p1-sort-grid" style="display:none;">
+                            <div class="sort-target-slots" id="p1-sort-slots"></div>
+                            <div class="sort-unplaced-pool" id="p1-sort-pool"></div>
+                        </div>
 
                         <!-- ACTION & FEEDBACK -->
                         <div class="player-actions-bar">
@@ -102,13 +115,13 @@
                         <button id="btn-restart-battle-center" class="btn-restart-sm">🔄 ULANG</button>
                     </div>
                     
-                    <div class="pool-instruction">⚡ GAME CEPAT-CEPATAN! 2 PEMAIN BISA NGGESER BERSAMAAN ⚡</div>
+                    <div class="pool-instruction" id="center-pool-instruction">⚡ GAME CEPAT-CEPATAN! 2 PEMAIN BISA NGGESER BERSAMAAN ⚡</div>
                     
                     <!-- FIXED DIGITS 0-9 GRID -->
                     <div id="center-tokens-container" class="static-digits-grid"></div>
 
                     <!-- DUAL PLAYER INDEPENDENT SELECTION INDICATORS -->
-                    <div class="selected-digit-indicators-dual">
+                    <div class="selected-digit-indicators-dual" id="center-selection-indicators">
                         <div class="p1-selected-pill">
                             🎮 P1: <span id="p1-selected-digit-val">-</span>
                         </div>
@@ -135,14 +148,27 @@
                     <!-- SINGLE SOAL CARD -->
                     <div class="single-soal-card p2-soal-card">
                         <div class="q-label-bar">
-                            <span>🎯 SOAL PEMAIN 2</span>
+                            <span id="p2-cat-tag">🎯 SOAL PEMAIN 2</span>
                             <span class="mode-tag-pill" id="p2-mode-tag">Ribuan</span>
                         </div>
                         <div class="main-number-disp" id="p2-target-number">...</div>
-                        <div class="q-instruction">Seret ATAU Klik angka 0-9 di tengah, lalu isi kotak nilai tempat!</div>
+                        <div class="q-instruction" id="p2-instruction">Seret ATAU Klik angka 0-9 di tengah, lalu isi kotak nilai tempat!</div>
 
-                        <!-- DIGIT PLACE VALUE TARGET BOXES GRID -->
+                        <!-- CATEGORY 1: DIGIT PLACE VALUE TARGET BOXES GRID -->
                         <div class="digit-boxes-grid" id="p2-digit-grid"></div>
+
+                        <!-- CATEGORY 2: COMPARE OPERATOR CHOICES CONTAINER -->
+                        <div class="compare-choices-grid" id="p2-compare-grid" style="display:none;">
+                            <button class="btn-op-choice p2-op-choice" data-op=">">&gt; (Lebih Besar)</button>
+                            <button class="btn-op-choice p2-op-choice" data-op="<">&lt; (Lebih Kecil)</button>
+                            <button class="btn-op-choice p2-op-choice" data-op="=">= (Sama)</button>
+                        </div>
+
+                        <!-- CATEGORY 3: SORTING NUMBERS CONTAINER -->
+                        <div class="sorting-battle-grid" id="p2-sort-grid" style="display:none;">
+                            <div class="sort-target-slots" id="p2-sort-slots"></div>
+                            <div class="sort-unplaced-pool" id="p2-sort-pool"></div>
+                        </div>
 
                         <!-- ACTION & FEEDBACK -->
                         <div class="player-actions-bar">
@@ -385,8 +411,18 @@
                     </div>
                 </div>
 
+                <div class="battle-cat-select">
+                    <label>🎮 Pilih Kategori Battle (Jenis Permainan):</label>
+                    <div class="cat-options-grid">
+                        <button class="btn-category active" data-category="nilai_tempat">🧮 1. Menentukan Nilai Tempat</button>
+                        <button class="btn-category" data-category="membandingkan">⚖️ 2. Membandingkan Bilangan (&gt;, &lt;, =)</button>
+                        <button class="btn-category" data-category="mengurutkan">🔢 3. Mengurutkan Bilangan (Naik/Turun)</button>
+                        <button class="btn-category" data-category="campuran_kategori">🎲 4. Mode Campuran Kategori</button>
+                    </div>
+                </div>
+
                 <div class="mode-select">
-                    <label>Pilih Jenis Soal:</label>
+                    <label>Pilih Tingkat Bilangan:</label>
                     <div class="mode-options mode-options-grid">
                         <button class="btn-mode active" data-mode="campuran">🎲 Mode Campuran (Acak Level)</button>
                         <button class="btn-mode" data-mode="ratusan">💯 Mode Ratusan</button>

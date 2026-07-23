@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
         soundEnabled: true,
         
         // Battle State
+        category: 'nilai_tempat', // 'nilai_tempat', 'membandingkan', 'mengurutkan', 'campuran_kategori'
         mode: 'campuran',
         campuranLevel: 'miliaran',
         totalRounds: 5,
@@ -74,8 +75,20 @@ document.addEventListener('DOMContentLoaded', () => {
         totalRoundsDisps: document.querySelectorAll('.total-rounds-disp'),
         p1TargetNum: document.getElementById('p1-target-number'),
         p2TargetNum: document.getElementById('p2-target-number'),
+        p1CatTag: document.getElementById('p1-cat-tag'),
+        p2CatTag: document.getElementById('p2-cat-tag'),
+        p1Instruction: document.getElementById('p1-instruction'),
+        p2Instruction: document.getElementById('p2-instruction'),
         p1DigitGrid: document.getElementById('p1-digit-grid'),
         p2DigitGrid: document.getElementById('p2-digit-grid'),
+        p1CompareGrid: document.getElementById('p1-compare-grid'),
+        p2CompareGrid: document.getElementById('p2-compare-grid'),
+        p1SortGrid: document.getElementById('p1-sort-grid'),
+        p2SortGrid: document.getElementById('p2-sort-grid'),
+        p1SortPool: document.getElementById('p1-sort-pool'),
+        p2SortPool: document.getElementById('p2-sort-pool'),
+        p1SortSlots: document.getElementById('p1-sort-slots'),
+        p2SortSlots: document.getElementById('p2-sort-slots'),
         p1ModeTag: document.getElementById('p1-mode-tag'),
         p2ModeTag: document.getElementById('p2-mode-tag'),
         p1BtnCheck: document.getElementById('p1-btn-check'),
@@ -83,6 +96,8 @@ document.addEventListener('DOMContentLoaded', () => {
         p1Feedback: document.getElementById('p1-feedback'),
         p2Feedback: document.getElementById('p2-feedback'),
         centerTokensContainer: document.getElementById('center-tokens-container'),
+        centerPoolInstruction: document.getElementById('center-pool-instruction'),
+        centerSelectionIndicators: document.getElementById('center-selection-indicators'),
         p1SelectedDigitValDisp: document.getElementById('p1-selected-digit-val'),
         p2SelectedDigitValDisp: document.getElementById('p2-selected-digit-val'),
         winnerTitle: document.getElementById('winner-title'),
@@ -91,6 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
         p2FinalName: document.getElementById('p2-final-name'),
         p1FinalScore: document.getElementById('p1-final-score'),
         p2FinalScore: document.getElementById('p2-final-score'),
+        catBtns: document.querySelectorAll('.btn-category'),
         modeBtns: document.querySelectorAll('.btn-mode'),
         campuranLevelContainer: document.getElementById('campuran-level-container'),
         campuranLevelBtns: document.querySelectorAll('.btn-campuran-level'),
@@ -390,7 +406,14 @@ document.addEventListener('DOMContentLoaded', () => {
             allowedLevels = [state.mode];
         }
 
+        const catPool = ['nilai_tempat', 'membandingkan', 'mengurutkan'];
+
         for (let r = 1; r <= state.totalRounds; r++) {
+            let rCat = state.category;
+            if (state.category === 'campuran_kategori') {
+                rCat = catPool[Math.floor(Math.random() * catPool.length)];
+            }
+
             let levelKey;
             if (state.mode === 'campuran') {
                 levelKey = allowedLevels[Math.floor(Math.random() * allowedLevels.length)];
@@ -401,35 +424,50 @@ document.addEventListener('DOMContentLoaded', () => {
             const pvDefList = ALL_PV_LEVELS[levelKey] || ALL_PV_LEVELS.ribuan;
             const numDigits = pvDefList.length;
 
-            // Unique question for Player 1
-            let digitsP1, numStrP1, attemptsP1 = 0;
-            do {
-                digitsP1 = [];
-                for (let i = 0; i < numDigits; i++) {
-                    digitsP1.push(i === 0 ? Math.floor(Math.random() * 9) + 1 : Math.floor(Math.random() * 10));
-                }
-                numStrP1 = digitsP1.join('');
-                attemptsP1++;
-            } while (usedNumbers.has(numStrP1) && attemptsP1 < 100);
-            usedNumbers.add(numStrP1);
+            function genUniqueNumStr() {
+                let digits, numStr, attempts = 0;
+                do {
+                    digits = [];
+                    for (let i = 0; i < numDigits; i++) {
+                        digits.push(i === 0 ? Math.floor(Math.random() * 9) + 1 : Math.floor(Math.random() * 10));
+                    }
+                    numStr = digits.join('');
+                    attempts++;
+                } while (usedNumbers.has(numStr) && attempts < 100);
+                usedNumbers.add(numStr);
+                return { digits, numStr, formatted: formatDots(numStr) };
+            }
 
-            // Unique question for Player 2 (different from P1 and prior numbers)
-            let digitsP2, numStrP2, attemptsP2 = 0;
-            do {
-                digitsP2 = [];
-                for (let i = 0; i < numDigits; i++) {
-                    digitsP2.push(i === 0 ? Math.floor(Math.random() * 9) + 1 : Math.floor(Math.random() * 10));
-                }
-                numStrP2 = digitsP2.join('');
-                attemptsP2++;
-            } while (usedNumbers.has(numStrP2) && attemptsP2 < 100);
-            usedNumbers.add(numStrP2);
+            if (rCat === 'nilai_tempat') {
+                const n1 = genUniqueNumStr();
+                const n2 = genUniqueNumStr();
+                seqP1.push({ category: 'nilai_tempat', roundNum: r, levelKey, levelName: levelKey.replace(/_/g, ' ').toUpperCase(), formattedNumber: n1.formatted, digits: n1.digits, pvDefList });
+                seqP2.push({ category: 'nilai_tempat', roundNum: r, levelKey, levelName: levelKey.replace(/_/g, ' ').toUpperCase(), formattedNumber: n2.formatted, digits: n2.digits, pvDefList });
+            } else if (rCat === 'membandingkan') {
+                const a1 = genUniqueNumStr();
+                const b1 = genUniqueNumStr();
+                const a2 = genUniqueNumStr();
+                const b2 = genUniqueNumStr();
 
-            const formattedP1 = formatDots(numStrP1);
-            const formattedP2 = formatDots(numStrP2);
+                const vA1 = BigInt(a1.numStr), vB1 = BigInt(b1.numStr);
+                const expOp1 = vA1 > vB1 ? '>' : (vA1 < vB1 ? '<' : '=');
 
-            seqP1.push({ roundNum: r, levelKey, levelName: levelKey.replace(/_/g, ' ').toUpperCase(), formattedNumber: formattedP1, digits: digitsP1, pvDefList });
-            seqP2.push({ roundNum: r, levelKey, levelName: levelKey.replace(/_/g, ' ').toUpperCase(), formattedNumber: formattedP2, digits: digitsP2, pvDefList });
+                const vA2 = BigInt(a2.numStr), vB2 = BigInt(b2.numStr);
+                const expOp2 = vA2 > vB2 ? '>' : (vA2 < vB2 ? '<' : '=');
+
+                seqP1.push({ category: 'membandingkan', roundNum: r, levelKey, levelName: levelKey.replace(/_/g, ' ').toUpperCase(), numA: a1.formatted, numB: b1.formatted, expectedOp: expOp1 });
+                seqP2.push({ category: 'membandingkan', roundNum: r, levelKey, levelName: levelKey.replace(/_/g, ' ').toUpperCase(), numA: a2.formatted, numB: b2.formatted, expectedOp: expOp2 });
+            } else if (rCat === 'mengurutkan') {
+                const sortDir = Math.random() < 0.5 ? 'asc' : 'desc';
+                const items1 = [genUniqueNumStr(), genUniqueNumStr(), genUniqueNumStr()];
+                const items2 = [genUniqueNumStr(), genUniqueNumStr(), genUniqueNumStr()];
+
+                const sorted1 = [...items1].sort((a, b) => sortDir === 'asc' ? (BigInt(a.numStr) < BigInt(b.numStr) ? -1 : 1) : (BigInt(a.numStr) > BigInt(b.numStr) ? -1 : 1));
+                const sorted2 = [...items2].sort((a, b) => sortDir === 'asc' ? (BigInt(a.numStr) < BigInt(b.numStr) ? -1 : 1) : (BigInt(a.numStr) > BigInt(b.numStr) ? -1 : 1));
+
+                seqP1.push({ category: 'mengurutkan', roundNum: r, levelKey, levelName: levelKey.replace(/_/g, ' ').toUpperCase(), sortDir, pool: items1.map(i => i.formatted), expectedSorted: sorted1.map(s => s.formatted) });
+                seqP2.push({ category: 'mengurutkan', roundNum: r, levelKey, levelName: levelKey.replace(/_/g, ' ').toUpperCase(), sortDir, pool: items2.map(i => i.formatted), expectedSorted: sorted2.map(s => s.formatted) });
+            }
         }
 
         return { p1: seqP1, p2: seqP2 };
@@ -437,23 +475,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function buildPlayerQuestionFromSeq(pKey, roundIndex) {
         const qData = state.questionsSequence[pKey][roundIndex];
-        const targetSlots = qData.pvDefList.map((pv, idx) => ({
-            pvKey: pv.key,
-            label: pv.label,
-            expectedDigit: qData.digits[idx],
-            filled: false,
-            filledDigit: null,
-            status: 'neutral'
-        }));
 
-        return {
-            playerKey: pKey,
-            roundIndex: roundIndex,
-            levelName: qData.levelName,
-            formattedNumber: qData.formattedNumber,
-            targetSlots: targetSlots,
-            isComplete: false
-        };
+        if (qData.category === 'nilai_tempat') {
+            const targetSlots = qData.pvDefList.map((pv, idx) => ({
+                pvKey: pv.key,
+                label: pv.label,
+                expectedDigit: qData.digits[idx],
+                filled: false,
+                filledDigit: null,
+                status: 'neutral'
+            }));
+
+            return {
+                category: 'nilai_tempat',
+                playerKey: pKey,
+                roundIndex: roundIndex,
+                levelName: qData.levelName,
+                formattedNumber: qData.formattedNumber,
+                targetSlots: targetSlots,
+                isComplete: false
+            };
+        } else if (qData.category === 'membandingkan') {
+            return {
+                category: 'membandingkan',
+                playerKey: pKey,
+                roundIndex: roundIndex,
+                levelName: qData.levelName,
+                numA: qData.numA,
+                numB: qData.numB,
+                expectedOp: qData.expectedOp,
+                selectedOp: null,
+                isComplete: false
+            };
+        } else if (qData.category === 'mengurutkan') {
+            return {
+                category: 'mengurutkan',
+                playerKey: pKey,
+                roundIndex: roundIndex,
+                levelName: qData.levelName,
+                sortDir: qData.sortDir,
+                pool: [...qData.pool],
+                targetSlots: [],
+                expectedSorted: [...qData.expectedSorted],
+                isComplete: false
+            };
+        }
     }
 
     function initBattle() {
@@ -475,7 +541,6 @@ document.addEventListener('DOMContentLoaded', () => {
             state.endGameTimer = null;
         }
 
-        // Reset independent player selections
         state.p1SelectedDigitVal = null;
         state.p2SelectedDigitVal = null;
         dom.p1SelectedDigitValDisp.textContent = '-';
@@ -514,109 +579,150 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderPlayerSingleSoal(pKey, question) {
         const numDisplay = pKey === 'p1' ? dom.p1TargetNum : dom.p2TargetNum;
-        const grid = pKey === 'p1' ? dom.p1DigitGrid : dom.p2DigitGrid;
-        const tag = pKey === 'p1' ? dom.p1ModeTag : dom.p2ModeTag;
+        const catTag = pKey === 'p1' ? dom.p1CatTag : dom.p2CatTag;
+        const instruction = pKey === 'p1' ? dom.p1Instruction : dom.p2Instruction;
+        const modeTag = pKey === 'p1' ? dom.p1ModeTag : dom.p2ModeTag;
         const roundDisp = pKey === 'p1' ? dom.p1RoundDisp : dom.p2RoundDisp;
 
-        numDisplay.textContent = question.formattedNumber;
-        tag.textContent = question.levelName;
+        const digitGrid = pKey === 'p1' ? dom.p1DigitGrid : dom.p2DigitGrid;
+        const compareGrid = pKey === 'p1' ? dom.p1CompareGrid : dom.p2CompareGrid;
+        const sortGrid = pKey === 'p1' ? dom.p1SortGrid : dom.p2SortGrid;
+        const sortPool = pKey === 'p1' ? dom.p1SortPool : dom.p2SortPool;
+        const sortSlots = pKey === 'p1' ? dom.p1SortSlots : dom.p2SortSlots;
+
         roundDisp.textContent = (pKey === 'p1' ? state.p1CurrentRound : state.p2CurrentRound);
+        modeTag.textContent = question.levelName;
 
-        grid.innerHTML = '';
-        question.targetSlots.forEach((slot, idx) => {
-            const boxEl = document.createElement('div');
-            let statusClass = '';
-            if (slot.status === 'correct') statusClass = 'checked-correct';
-            if (slot.status === 'wrong') statusClass = 'checked-wrong';
+        if (question.category === 'nilai_tempat') {
+            if (catTag) catTag.textContent = '🧮 NILAI TEMPAT';
+            if (instruction) instruction.textContent = 'Seret ATAU Klik angka 0-9 di tengah, lalu isi kotak nilai tempat!';
+            numDisplay.textContent = question.formattedNumber;
 
-            boxEl.className = `digit-box ${slot.filled ? 'filled' : ''} ${statusClass}`;
-            boxEl.dataset.player = pKey;
-            boxEl.dataset.slotIndex = idx;
-            boxEl.dataset.pv = slot.pvKey;
+            digitGrid.style.display = 'flex';
+            compareGrid.style.display = 'none';
+            sortGrid.style.display = 'none';
 
-            boxEl.innerHTML = `
-                <span class="digit-pv-label">${slot.label}</span>
-                <span class="digit-slot">${slot.filled ? slot.filledDigit : '?'}</span>
-            `;
+            if (dom.centerPoolInstruction) dom.centerPoolInstruction.textContent = '⚡ GAME CEPAT-CEPATAN! 2 PEMAIN BISA NGGESER BERSAMAAN ⚡';
+            if (dom.centerTokensContainer) dom.centerTokensContainer.style.display = 'grid';
+            if (dom.centerSelectionIndicators) dom.centerSelectionIndicators.style.display = 'grid';
 
-            // INDEPENDENT CLICK TO PLACE FOR P1 & P2
-            boxEl.addEventListener('click', () => {
-                const selectedVal = pKey === 'p1' ? state.p1SelectedDigitVal : state.p2SelectedDigitVal;
-                if (selectedVal !== null && !question.isComplete) {
-                    placeDigitInSlot(pKey, idx, selectedVal);
+            digitGrid.innerHTML = '';
+            question.targetSlots.forEach((slot, idx) => {
+                const boxEl = document.createElement('div');
+                let statusClass = '';
+                if (slot.status === 'correct') statusClass = 'checked-correct';
+                if (slot.status === 'wrong') statusClass = 'checked-wrong';
+
+                boxEl.className = `digit-box ${slot.filled ? 'filled' : ''} ${statusClass}`;
+                boxEl.dataset.player = pKey;
+                boxEl.dataset.slotIndex = idx;
+                boxEl.dataset.pv = slot.pvKey;
+
+                boxEl.innerHTML = `
+                    <span class="digit-pv-label">${slot.label}</span>
+                    <span class="digit-slot">${slot.filled ? slot.filledDigit : '?'}</span>
+                `;
+
+                boxEl.addEventListener('click', () => {
+                    const selectedVal = pKey === 'p1' ? state.p1SelectedDigitVal : state.p2SelectedDigitVal;
+                    if (selectedVal !== null && !question.isComplete) {
+                        placeDigitInSlot(pKey, idx, selectedVal);
+                    }
+                });
+
+                boxEl.addEventListener('dragover', (e) => { e.preventDefault(); boxEl.classList.add('drag-over'); });
+                boxEl.addEventListener('dragleave', () => boxEl.classList.remove('drag-over'));
+                boxEl.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    boxEl.classList.remove('drag-over');
+                    const val = parseInt(e.dataTransfer.getData('text/plain'));
+                    if (!isNaN(val) && !question.isComplete) {
+                        placeDigitInSlot(pKey, idx, val);
+                    }
+                });
+
+                digitGrid.appendChild(boxEl);
+            });
+        } else if (question.category === 'membandingkan') {
+            if (catTag) catTag.textContent = '⚖️ MEMBANDINGKAN';
+            if (instruction) instruction.textContent = 'Pilih operator perbandingan yang tepat (> , < , =)!';
+            numDisplay.textContent = `${question.numA}  ❓  ${question.numB}`;
+
+            digitGrid.style.display = 'none';
+            compareGrid.style.display = 'flex';
+            sortGrid.style.display = 'none';
+
+            if (dom.centerPoolInstruction) dom.centerPoolInstruction.textContent = '⚡ ADU CEPAT MEMBANDINGKAN BILANGAN! ⚡';
+            if (dom.centerTokensContainer) dom.centerTokensContainer.style.display = 'none';
+            if (dom.centerSelectionIndicators) dom.centerSelectionIndicators.style.display = 'none';
+
+            const opBtns = compareGrid.querySelectorAll('.btn-op-choice');
+            opBtns.forEach(btn => {
+                const op = btn.dataset.op;
+                btn.classList.toggle('selected', question.selectedOp === op);
+
+                btn.onclick = () => {
+                    if (question.isComplete) return;
+                    AudioEngine.play('drag');
+                    question.selectedOp = op;
+                    renderPlayerSingleSoal(pKey, question);
+                };
+            });
+        } else if (question.category === 'mengurutkan') {
+            if (catTag) catTag.textContent = '🔢 MENGURUTKAN';
+            const dirLabel = question.sortDir === 'asc' ? 'TERKECIL ➔ TERBESAR ↗️' : 'TERBESAR ➔ TERKECIL ↘️';
+            if (instruction) instruction.textContent = `Klik angka di bawah untuk menyusun urutan dari ${dirLabel}!`;
+            numDisplay.textContent = `${question.sortDir === 'asc' ? 'TERKECIL ➔ TERBESAR' : 'TERBESAR ➔ TERKECIL'}`;
+
+            digitGrid.style.display = 'none';
+            compareGrid.style.display = 'none';
+            sortGrid.style.display = 'flex';
+
+            if (dom.centerPoolInstruction) dom.centerPoolInstruction.textContent = '⚡ ADU CEPAT MENGURUTKAN BILANGAN! ⚡';
+            if (dom.centerTokensContainer) dom.centerTokensContainer.style.display = 'none';
+            if (dom.centerSelectionIndicators) dom.centerSelectionIndicators.style.display = 'none';
+
+            // Target Slots
+            sortSlots.innerHTML = '';
+            for (let i = 0; i < 3; i++) {
+                const placedVal = question.targetSlots[i];
+                const slotBtn = document.createElement('div');
+                slotBtn.className = `sort-target-slot-pill ${placedVal ? 'filled' : ''}`;
+                slotBtn.textContent = placedVal ? `#${i + 1}: ${placedVal}` : `#${i + 1}: [ ? ]`;
+
+                slotBtn.onclick = () => {
+                    if (placedVal && !question.isComplete) {
+                        AudioEngine.play('drag');
+                        question.targetSlots.splice(i, 1);
+                        renderPlayerSingleSoal(pKey, question);
+                    }
+                };
+
+                sortSlots.appendChild(slotBtn);
+            }
+
+            // Unplaced Pool
+            sortPool.innerHTML = '';
+            question.pool.forEach(numStr => {
+                const isPlaced = question.targetSlots.includes(numStr);
+                if (!isPlaced) {
+                    const poolBtn = document.createElement('button');
+                    poolBtn.className = 'btn-sort-num-pill';
+                    poolBtn.textContent = numStr;
+
+                    poolBtn.onclick = () => {
+                        if (question.targetSlots.length < 3 && !question.isComplete) {
+                            AudioEngine.play('drag');
+                            question.targetSlots.push(numStr);
+                            renderPlayerSingleSoal(pKey, question);
+                        }
+                    };
+
+                    sortPool.appendChild(poolBtn);
                 }
             });
-
-            // INDEPENDENT DRAG & DROP FOR P1 & P2
-            boxEl.addEventListener('dragover', (e) => { e.preventDefault(); boxEl.classList.add('drag-over'); });
-            boxEl.addEventListener('dragleave', () => boxEl.classList.remove('drag-over'));
-            boxEl.addEventListener('drop', (e) => {
-                e.preventDefault();
-                boxEl.classList.remove('drag-over');
-                const val = parseInt(e.dataTransfer.getData('text/plain'));
-                if (!isNaN(val) && !question.isComplete) {
-                    placeDigitInSlot(pKey, idx, val);
-                }
-            });
-
-            grid.appendChild(boxEl);
-        });
+        }
     }
-
-    function placeDigitInSlot(pKey, slotIdx, digitVal) {
-        AudioEngine.play('drag');
-        const question = pKey === 'p1' ? state.p1Question : state.p2Question;
-        const targetSlot = question.targetSlots[slotIdx];
-
-        targetSlot.filled = true;
-        targetSlot.filledDigit = digitVal;
-        targetSlot.status = 'neutral';
-
-        renderPlayerSingleSoal(pKey, question);
-    }
-
-    // STATIC CENTER GRID OF DIGITS 0 TO 9 (DUAL INDEPENDENT PLAYERS)
-    function renderStaticCenterDigitsGrid() {
-        dom.centerTokensContainer.innerHTML = '';
-        const staticDigits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-
-        staticDigits.forEach((digitVal) => {
-            const tokenEl = document.createElement('div');
-
-            let selectClass = '';
-            const isP1 = state.p1SelectedDigitVal === digitVal;
-            const isP2 = state.p2SelectedDigitVal === digitVal;
-            if (isP1 && isP2) selectClass = 'selected-both';
-            else if (isP1) selectClass = 'selected-p1';
-            else if (isP2) selectClass = 'selected-p2';
-
-            tokenEl.className = `digit-token-static ${selectClass}`;
-            tokenEl.textContent = digitVal;
-            tokenEl.draggable = true;
-
-            // CLICK SELECTION - SETS FOR BOTH P1 & P2 INDEPENDENTLY
-            tokenEl.addEventListener('click', (e) => {
-                AudioEngine.play('drag');
-                // Set both or whichever clicked
-                state.p1SelectedDigitVal = digitVal;
-                state.p2SelectedDigitVal = digitVal;
-                dom.p1SelectedDigitValDisp.textContent = digitVal;
-                dom.p2SelectedDigitValDisp.textContent = digitVal;
-                renderStaticCenterDigitsGrid();
-            });
-
-            // DRAG START (SIMULTANEOUS DUAL PLAYER DRAG)
-            tokenEl.addEventListener('dragstart', (e) => {
-                AudioEngine.play('drag');
-                e.dataTransfer.setData('text/plain', digitVal);
-            });
-
-            dom.centerTokensContainer.appendChild(tokenEl);
-        });
-    }
-
-    dom.p1BtnCheck.addEventListener('click', () => checkPlayerAnswer('p1'));
-    dom.p2BtnCheck.addEventListener('click', () => checkPlayerAnswer('p2'));
 
     function checkPlayerAnswer(pKey) {
         const question = pKey === 'p1' ? state.p1Question : state.p2Question;
@@ -624,79 +730,92 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (question.isComplete) return;
 
-        let allFilled = true;
-        let allCorrect = true;
+        let isAllCorrect = false;
 
-        question.targetSlots.forEach(slot => {
-            if (!slot.filled) {
-                allFilled = false;
-                slot.status = 'wrong';
-            } else if (slot.filledDigit === slot.expectedDigit) {
-                slot.status = 'correct';
-            } else {
-                slot.status = 'wrong';
-                allCorrect = false;
+        if (question.category === 'nilai_tempat') {
+            const unfilled = question.targetSlots.some(s => !s.filled);
+            if (unfilled) {
+                AudioEngine.play('wrong');
+                feedbackEl.textContent = '❌ Isilah semua kotak nilai tempat terlebih dahulu!';
+                feedbackEl.className = 'feedback-msg wrong';
+                return;
             }
-        });
+
+            let correctCount = 0;
+            question.targetSlots.forEach(s => {
+                if (s.filledDigit === s.expectedDigit) {
+                    s.status = 'correct';
+                    correctCount++;
+                } else {
+                    s.status = 'wrong';
+                }
+            });
+
+            isAllCorrect = (correctCount === question.targetSlots.length);
+        } else if (question.category === 'membandingkan') {
+            if (!question.selectedOp) {
+                AudioEngine.play('wrong');
+                feedbackEl.textContent = '⚠️ Pilih operator (> , < , =) terlebih dahulu!';
+                feedbackEl.className = 'feedback-msg wrong';
+                return;
+            }
+            isAllCorrect = (question.selectedOp === question.expectedOp);
+        } else if (question.category === 'mengurutkan') {
+            if (question.targetSlots.length < 3) {
+                AudioEngine.play('wrong');
+                feedbackEl.textContent = '⚠️ Susun ketiga bilangan ke dalam urutan #1, #2, dan #3!';
+                feedbackEl.className = 'feedback-msg wrong';
+                return;
+            }
+            isAllCorrect = question.targetSlots.every((val, idx) => val === question.expectedSorted[idx]);
+        }
 
         renderPlayerSingleSoal(pKey, question);
 
-        if (!allFilled) {
-            AudioEngine.play('wrong');
-            feedbackEl.textContent = '❌ Isilah semua kotak nilai tempat terlebih dahulu!';
-            feedbackEl.className = 'feedback-msg wrong';
-        } else if (allCorrect) {
+        if (isAllCorrect) {
             AudioEngine.play('correct');
             question.isComplete = true;
 
+            const roundPoin = question.category === 'nilai_tempat' ? 100 * question.targetSlots.length : 300;
             if (pKey === 'p1') {
-                state.p1Score += 100 * question.targetSlots.length;
+                state.p1Score += roundPoin;
                 dom.p1Score.textContent = state.p1Score;
-
-                if (state.p1CurrentRound < state.totalRounds) {
-                    state.p1CurrentRound++;
-                    state.p1Question = buildPlayerQuestionFromSeq('p1', state.p1CurrentRound - 1);
-                    feedbackEl.textContent = `🔥 BENAR! Kamu duluan masuk ke RONDE ${state.p1CurrentRound}! (${state.p1Question.levelName})`;
-                    feedbackEl.className = 'feedback-msg correct';
-                    setTimeout(() => {
-                        feedbackEl.textContent = '';
-                        renderPlayerSingleSoal('p1', state.p1Question);
-                    }, 1200);
-                } else {
-                    state.p1FinishedAll = true;
-                    feedbackEl.textContent = '🏆 SELAMAT! Kamu telah menyelesaikan SELURUH RONDE!';
-                    feedbackEl.className = 'feedback-msg correct';
-                    checkEndGame();
-                }
             } else {
-                state.p2Score += 100 * question.targetSlots.length;
+                state.p2Score += roundPoin;
                 dom.p2Score.textContent = state.p2Score;
-
-                if (state.p2CurrentRound < state.totalRounds) {
-                    state.p2CurrentRound++;
-                    state.p2Question = buildPlayerQuestionFromSeq('p2', state.p2CurrentRound - 1);
-                    feedbackEl.textContent = `🔥 BENAR! Kamu duluan masuk ke RONDE ${state.p2CurrentRound}! (${state.p2Question.levelName})`;
-                    feedbackEl.className = 'feedback-msg correct';
-                    setTimeout(() => {
-                        feedbackEl.textContent = '';
-                        renderPlayerSingleSoal('p2', state.p2Question);
-                    }, 1200);
-                } else {
-                    state.p2FinishedAll = true;
-                    feedbackEl.textContent = '🏆 SELAMAT! Kamu telah menyelesaikan SELURUH RONDE!';
-                    feedbackEl.className = 'feedback-msg correct';
-                    checkEndGame();
-                }
             }
 
+            const currentRound = pKey === 'p1' ? state.p1CurrentRound : state.p2CurrentRound;
+
+            if (currentRound < state.totalRounds) {
+                if (pKey === 'p1') {
+                    state.p1CurrentRound++;
+                    state.p1Question = buildPlayerQuestionFromSeq('p1', state.p1CurrentRound - 1);
+                } else {
+                    state.p2CurrentRound++;
+                    state.p2Question = buildPlayerQuestionFromSeq('p2', state.p2CurrentRound - 1);
+                }
+
+                feedbackEl.textContent = `🔥 BENAR! +${roundPoin} POIN! Lanjut ke RONDE ${currentRound + 1}!`;
+                feedbackEl.className = 'feedback-msg correct';
+
+                setTimeout(() => {
+                    feedbackEl.textContent = '';
+                    renderPlayerSingleSoal(pKey, pKey === 'p1' ? state.p1Question : state.p2Question);
+                }, 1200);
+            } else {
+                if (pKey === 'p1') state.p1FinishedAll = true;
+                else state.p2FinishedAll = true;
+
+                feedbackEl.textContent = '🎉 BENAR! KAMU SUDAH MENYELESAIKAN SEMUA RONDE!';
+                feedbackEl.className = 'feedback-msg correct';
+
+                checkEndGame();
+            }
         } else {
             AudioEngine.play('wrong');
-            feedbackEl.textContent = '⚠️ Ada digit yang belum pas (kotak merah). Ayo perbaiki!';
+            feedbackEl.textContent = '❌ Jawaban belum tepat, periksa kembali!';
             feedbackEl.className = 'feedback-msg wrong';
-            if (pKey === 'p1') state.p1Score = Math.max(0, state.p1Score - 20);
-            else state.p2Score = Math.max(0, state.p2Score - 20);
-            dom.p1Score.textContent = state.p1Score;
-            dom.p2Score.textContent = state.p2Score;
         }
     }
 
@@ -1128,6 +1247,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (el) el.value = formatDots(num);
             }
             renderSortingModule();
+        });
+    }
+
+    if (dom.catBtns) {
+        dom.catBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                dom.catBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                state.category = btn.dataset.category;
+            });
         });
     }
 

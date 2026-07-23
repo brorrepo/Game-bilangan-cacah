@@ -970,6 +970,47 @@ input, textarea {
     font-size: 0.85rem;
 }
 
+.battle-cat-select {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.battle-cat-select label {
+    font-size: 0.78rem;
+    color: var(--neo-black);
+    font-weight: 800;
+    font-family: var(--font-heading);
+}
+
+.cat-options-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+}
+
+.btn-category {
+    background: var(--neo-white);
+    border: 2px solid var(--neo-black);
+    box-shadow: 2px 2px 0px #0f172a;
+    color: var(--neo-black);
+    padding: 8px 6px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 0.75rem;
+    font-family: var(--font-heading);
+    transition: all 0.15s ease;
+    text-align: center;
+}
+
+.btn-category.active {
+    background: var(--neo-yellow);
+    box-shadow: 4px 4px 0px #0f172a;
+    transform: translate(-1px, -1px);
+}
+
 .mode-options-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -1581,4 +1622,89 @@ input, textarea {
     font-size: 1.4rem;
     font-weight: 900;
     color: var(--neo-black);
+}
+
+/* COMPARE CHOICE BUTTONS IN BATTLE */
+.compare-choices-grid {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.btn-op-choice {
+    background: var(--neo-white);
+    border: 3px solid var(--neo-black);
+    box-shadow: 3px 3px 0px #0f172a;
+    color: var(--neo-black);
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    font-weight: 900;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex: 1;
+    text-align: center;
+}
+
+.btn-op-choice:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0px #0f172a;
+}
+
+.btn-op-choice.selected {
+    background: var(--neo-yellow);
+    box-shadow: 0 0 0 3px var(--neo-black);
+}
+
+/* SORTING BATTLE GRID IN ARENA */
+.sorting-battle-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.sort-unplaced-pool, .sort-target-slots {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+}
+
+.btn-sort-num-pill {
+    background: var(--neo-white);
+    border: 2px solid var(--neo-black);
+    box-shadow: 2px 2px 0px #0f172a;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    font-weight: 900;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-sort-num-pill:hover {
+    background: var(--neo-cyan);
+}
+
+.sort-target-slot-pill {
+    background: #f8fafc;
+    border: 2px dashed var(--neo-black);
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    font-weight: 900;
+    min-width: 90px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.sort-target-slot-pill.filled {
+    background: #fef08a;
+    border-style: solid;
 }
