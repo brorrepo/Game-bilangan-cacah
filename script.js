@@ -1422,6 +1422,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- START BATTLE LISTENERS ---
+    if (dom.p1BtnCheck) {
+        dom.p1BtnCheck.addEventListener('click', () => {
+            checkPlayerAnswer('p1');
+        });
+    }
+
+    if (dom.p2BtnCheck) {
+        dom.p2BtnCheck.addEventListener('click', () => {
+            checkPlayerAnswer('p2');
+        });
+    }
+
     dom.btnStartGame.addEventListener('click', () => {
         state.p1Name = dom.p1NameInput.value.trim() || 'Budi';
         state.p2Name = dom.p2NameInput.value.trim() || 'Siti';
