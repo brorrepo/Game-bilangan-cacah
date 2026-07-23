@@ -48,6 +48,9 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCert: document.getElementById('btn-cert'),
         certOverlay: document.getElementById('cert-overlay'),
         btnCloseCert: document.getElementById('btn-close-cert'),
+        btnCloseWelcome: document.getElementById('btn-close-welcome'),
+        btnCloseStart: document.getElementById('btn-close-start'),
+        btnCloseVictory: document.getElementById('btn-close-victory'),
         certNameInput: document.getElementById('cert-name-input'),
 
         // Welcome Hub & Home Elements
@@ -1295,9 +1298,33 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- CERTIFICATE MODAL ENGINE ---
-    dom.btnCert.addEventListener('click', () => dom.certOverlay.classList.add('active'));
-    dom.btnCloseCert.addEventListener('click', () => dom.certOverlay.classList.remove('active'));
+    // --- ALL MODAL CLOSE BUTTON HANDLERS ---
+    if (dom.btnCert) dom.btnCert.addEventListener('click', () => dom.certOverlay.classList.add('active'));
+    if (dom.btnCloseCert) dom.btnCloseCert.addEventListener('click', () => dom.certOverlay.classList.remove('active'));
+    if (dom.btnCloseWelcome) dom.btnCloseWelcome.addEventListener('click', () => dom.welcomeHubOverlay.classList.remove('active'));
+    if (dom.btnCloseStart) dom.btnCloseStart.addEventListener('click', () => dom.startOverlay.classList.remove('active'));
+    if (dom.btnCloseVictory) dom.btnCloseVictory.addEventListener('click', () => dom.victoryOverlay.classList.remove('active'));
+
+    // CLOSE MODAL WHEN CLICKING OUTSIDE (OVERLAY BACKDROP)
+    const allOverlays = [dom.welcomeHubOverlay, dom.startOverlay, dom.victoryOverlay, dom.certOverlay];
+    allOverlays.forEach(overlay => {
+        if (overlay) {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.classList.remove('active');
+                }
+            });
+        }
+    });
+
+    // CLOSE MODAL ON ESCAPE KEY
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            allOverlays.forEach(overlay => {
+                if (overlay) overlay.classList.remove('active');
+            });
+        }
+    });
 
     // --- START BATTLE LISTENERS ---
     dom.btnStartGame.addEventListener('click', () => {
