@@ -37,23 +37,44 @@
     --font-body: 'Outfit', sans-serif;
 }
 
+html, body {
+    height: 100vh;
+    height: 100dvh;
+    width: 100vw;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    position: fixed;
+    inset: 0;
+    touch-action: none;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    overscroll-behavior: none;
+    background-color: var(--neo-bg);
+    color: var(--neo-black);
+    font-family: var(--font-body);
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
     user-select: none;
     -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: none;
+}
+
+input, button, select, textarea, .nav-btn, .btn-preset, .digit-token-static, .digit-box, .hub-option-card, .btn-primary-lg, .btn-secondary, .btn-icon {
     touch-action: manipulation;
 }
 
-body {
-    background-color: var(--neo-bg);
-    color: var(--neo-black);
-    font-family: var(--font-body);
-    height: 100vh;
-    width: 100vw;
-    overflow: hidden;
-    position: relative;
+input, textarea {
+    user-select: auto;
+    -webkit-user-select: auto;
 }
 
 #bg-canvas {
@@ -71,8 +92,11 @@ body {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    padding: 10px 14px;
-    gap: 10px;
+    height: calc(var(--vh, 1vh) * 100);
+    width: 100vw;
+    padding: 8px 12px;
+    gap: 8px;
+    overflow: hidden;
 }
 
 /* HEADER & NAV TABS (NEOBRUTALISM) */
@@ -1007,4 +1031,156 @@ body {
     #cert-overlay { position: absolute; top: 0; left: 0; width: 100%; background: #fff; color: #000; }
     .cert-border { border-color: #000; background: #fff; color: #000; }
     .cert-name-field { color: #000; border-bottom-color: #000; }
+}
+
+/* PORTRAIT WARNING OVERLAY FOR MOBILE */
+#portrait-warning-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    background: rgba(15, 23, 42, 0.96);
+    backdrop-filter: blur(12px);
+    z-index: 99999;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+}
+
+.portrait-warning-card {
+    background: var(--neo-white);
+    border: 4px solid var(--neo-black);
+    box-shadow: var(--neo-shadow-lg);
+    border-radius: 20px;
+    padding: 28px 20px;
+    max-width: 440px;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    color: var(--neo-black);
+}
+
+.rotate-phone-anim {
+    font-size: 3.5rem;
+    animation: rotateDevice 2.5s infinite ease-in-out;
+}
+
+@keyframes rotateDevice {
+    0%, 20% { transform: rotate(0deg); }
+    50%, 80% { transform: rotate(-90deg); }
+    100% { transform: rotate(0deg); }
+}
+
+.portrait-warning-card h2 {
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: var(--neo-black);
+    line-height: 1.3;
+}
+
+.portrait-warning-card p {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #334155;
+    line-height: 1.45;
+}
+
+.rotate-instruction {
+    background: var(--neo-yellow);
+    border: var(--neo-border);
+    box-shadow: var(--neo-shadow-sm);
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-family: var(--font-heading);
+    font-size: 0.8rem;
+    font-weight: 900;
+}
+
+/* DISPLAY PORTRAIT WARNING ONLY ON SMALL SCREENS IN PORTRAIT MODE */
+@media screen and (orientation: portrait) and (max-width: 1024px) {
+    #portrait-warning-overlay {
+        display: flex !important;
+    }
+}
+
+/* RESPONSIVE SCALING FOR SMALL LANDSCAPE SCREENS (SMARTPHONES) */
+@media screen and (max-height: 550px) {
+    .app-container {
+        padding: 4px 8px;
+        gap: 4px;
+    }
+    .game-header {
+        padding: 4px 10px;
+    }
+    .header-brand h1 {
+        font-size: 0.95rem;
+    }
+    .subtitle {
+        display: none;
+    }
+    .nav-btn {
+        padding: 4px 10px;
+        font-size: 0.78rem;
+    }
+    .btn-secondary, .btn-icon {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+    }
+    .battle-arena {
+        gap: 6px;
+        grid-template-columns: 1fr 190px 1fr;
+    }
+    .player-zone {
+        padding: 8px;
+        gap: 6px;
+    }
+    .single-soal-card {
+        padding: 8px;
+        gap: 6px;
+    }
+    .main-number-disp {
+        font-size: 1.35rem;
+        padding: 2px;
+        margin: 2px 0;
+    }
+    .q-instruction {
+        font-size: 0.65rem;
+        padding: 2px 4px;
+    }
+    .digit-box {
+        min-height: 48px;
+        padding: 2px;
+    }
+    .digit-slot {
+        font-size: 1.1rem;
+    }
+    .digit-pv-label {
+        font-size: 0.5rem;
+        padding: 1px 2px;
+    }
+    .btn-check-answer {
+        padding: 6px 10px;
+        font-size: 0.82rem;
+    }
+    .static-digits-grid {
+        gap: 4px;
+    }
+    .digit-token-static {
+        width: 38px;
+        height: 38px;
+        font-size: 1.2rem;
+    }
+    .center-pool-zone {
+        padding: 6px;
+        gap: 4px;
+    }
+    .pool-instruction {
+        font-size: 0.55rem;
+    }
 }

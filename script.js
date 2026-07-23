@@ -51,6 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnSelectHubBattle: document.getElementById('btn-select-hub-battle'),
         btnSelectHubMateri: document.getElementById('btn-select-hub-materi'),
         btnHomeMenu: document.getElementById('btn-home-menu'),
+        btnForceLandscape: document.getElementById('btn-force-landscape'),
 
         // Battle Elements
         startOverlay: document.getElementById('start-overlay'),
@@ -773,6 +774,94 @@ document.addEventListener('DOMContentLoaded', () => {
         state.soundEnabled = !state.soundEnabled;
         dom.btnSound.textContent = state.soundEnabled ? '🔊' : '🔇';
     });
+
+    // --- ANTI-ZOOM & FIXED VIEWPORT ENGINE ---
+    // 1. Dynamic CSS --vh calculation
+    function setVhVariable() {
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+    setVhVariable();
+    window.addEventListener('resize', setVhVariable);
+    window.addEventListener('orientationchange', setVhVariable);
+
+    // 2. Prevent multi-finger touch zoom / pinch zoom
+    document.addEventListener('touchstart', (e) => {
+        if (e.touches && e.touches.length > 1) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    document.addEventListener('touchmove', (e) => {
+        if (e.touches && e.touches.length > 1) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    // 3. Prevent double-tap to zoom
+    let lastTouchEndTime = 0;
+    document.addEventListener('touchend', (e) => {
+        const now = Date.now();
+        if (now - lastTouchEndTime <= 300) {
+            if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                e.preventDefault();
+            }
+        }
+        lastTouchEndTime = now;
+    }, { passive: false });
+
+    // 4. Prevent iOS gesture zoom
+    ['gesturestart', 'gesturechange', 'gestureend'].forEach((eventName) => {
+        document.addEventListener(eventName, (e) => {
+            e.preventDefault();
+        }, { passive: false });
+    });
+
+    // 5. Prevent Ctrl + wheel zoom
+    document.addEventListener('wheel', (e) => {
+        if (e.ctrlKey) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    // 6. Landscape Lock & Fullscreen Request Helper
+    async function requestLandscapeMode() {
+        try {
+            if (document.documentElement.requestFullscreen) {
+                await document.documentElement.requestFullscreen();
+            } else if (document.documentElement.webkitRequestFullscreen) {
+                await document.documentElement.webkitRequestFullscreen();
+            }
+        } catch (err) {
+            console.log('Fullscreen ignored:', err);
+        }
+
+        try {
+            if (screen.orientation && screen.orientation.lock) {
+                await screen.orientation.lock('landscape');
+            }
+        } catch (err) {
+            console.log('Orientation lock not supported:', err);
+        }
+    }
+
+    if (dom.btnForceLandscape) {
+        dom.btnForceLandscape.addEventListener('click', () => {
+            requestLandscapeMode();
+        });
+    }
+
+    if (dom.btnStartGame) {
+        dom.btnStartGame.addEventListener('click', () => {
+            requestLandscapeMode();
+        });
+    }
+
+    if (dom.btnSelectHubBattle) {
+        dom.btnSelectHubBattle.addEventListener('click', () => {
+            requestLandscapeMode();
+        });
+    }
 
     // INITIAL RENDER
     renderMateriTab();

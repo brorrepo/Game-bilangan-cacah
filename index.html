@@ -2,7 +2,9 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>Media Pembelajaran Matematika SD 96/IV Kota Jambi</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,6 +14,19 @@
 </head>
 <body>
     <canvas id="bg-canvas"></canvas>
+    
+    <!-- PORTRAIT ORIENTATION WARNING OVERLAY FOR MOBILE -->
+    <div id="portrait-warning-overlay">
+        <div class="portrait-warning-card">
+            <div class="rotate-phone-anim">📱🔄</div>
+            <h2>MODE LANDSCAPE (MENDATAR) DIPERLUKAN</h2>
+            <p>Aplikasi Media Pembelajaran & Battle 2 Pemain SD 96/IV Kota Jambi dirancang khusus untuk posisi <strong>Landscape (Mendatar)</strong> agar muat dan nyaman dimainkan dua orang.</p>
+            <div class="rotate-instruction">
+                <span>↻ Sila Putar Smartphone / Tablet Anda ke Posisi Mendatar (Tidur)</span>
+            </div>
+            <button id="btn-force-landscape" class="btn-primary-lg">📺 Kunci Landscape / Fullscreen</button>
+        </div>
+    </div>
     
     <!-- MAIN CONTAINER -->
     <div class="app-container">
