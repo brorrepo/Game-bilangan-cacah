@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Media Pembelajaran Matematika SD 96/IV Kota Jambi</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Space+Grotesk:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <canvas id="bg-canvas"></canvas>
+    
+    <!-- MAIN CONTAINER -->
+    <div class="app-container">
+        
+        <!-- TOP NAVIGATION & HEADER WITH SD 96/IV KOTA JAMBI BRANDING -->
+        <header class="game-header">
+            <div class="header-brand">
+                <div class="badge-icon">🏫</div>
+                <div>
+                    <h1>SD 96/IV KOTA JAMBI</h1>
+                    <p class="subtitle">Media Pembelajaran Interaktif Matematika Kelas 5 SD</p>
+                </div>
+            </div>
+            
+            <!-- MODE NAVIGATION TABS -->
+            <nav class="nav-tabs">
+                <button class="nav-btn active" data-tab="tab-battle">⚔️ Battle 2 Pemain</button>
+                <button class="nav-btn" data-tab="tab-materi">📚 Materi Guru</button>
+            </nav>
+
+            <div class="header-actions">
+                <button id="btn-home-menu" class="btn-secondary" title="Kembali ke Menu Utama">🏠 Menu Utama</button>
+                <button id="btn-restart-battle-top" class="btn-secondary btn-restart" title="Mengulang Game Battle">🔄 Ulang Battle</button>
+                <button id="btn-sound" class="btn-icon" title="Toggle Suara">🔊</button>
+                <button id="btn-cert" class="btn-secondary">📜 Sertifikat</button>
+            </div>
+        </header>
+
+        <!-- CONTENT TAB 1: BATTLE 2 PEMAIN -->
+        <section id="tab-battle" class="tab-content active">
+            
+            <!-- BATTLE ARENA (SPLIT SCREEN) -->
+            <main class="battle-arena">
+                
+                <!-- PLAYER 1 ZONE (LEFT) -->
+                <section class="player-zone p1-zone">
+                    <div class="player-header">
+                        <div class="player-tag">
+                            <span class="avatar">🎮</span>
+                            <span id="p1-display-name">Pemain 1</span>
+                        </div>
+                        <div class="p-round-badge p1-badge">RONDE <span id="p1-round-disp">1</span>/<span class="total-rounds-disp">5</span></div>
+                        <div class="score-pill">
+                            <span class="score-label">POIN</span>
+                            <span class="score-val" id="p1-score">0</span>
+                        </div>
+                    </div>
+
+                    <!-- SINGLE SOAL CARD -->
+                    <div class="single-soal-card p1-soal-card">
+                        <div class="q-label-bar">
+                            <span>🎯 SOAL PEMAIN 1</span>
+                            <span class="mode-tag-pill" id="p1-mode-tag">Ribuan</span>
+                        </div>
+                        <div class="main-number-disp" id="p1-target-number">...</div>
+                        <div class="q-instruction">Seret ATAU Klik angka 0-9 di tengah, lalu isi kotak nilai tempat!</div>
+
+                        <!-- DIGIT PLACE VALUE TARGET BOXES GRID -->
+                        <div class="digit-boxes-grid" id="p1-digit-grid"></div>
+
+                        <!-- ACTION & FEEDBACK -->
+                        <div class="player-actions-bar">
+                            <button id="p1-btn-check" class="btn-check-answer p1-btn-check">✔️ CEK JAWABAN P1</button>
+                            <div class="feedback-msg" id="p1-feedback"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SHARED CENTER ARENA (STATIC DIGITS 0-9 GRID - DUAL SELECTION) -->
+                <section class="center-pool-zone">
+                    <div class="center-header-bar">
+                        <div class="battle-title-badge">⚔️ BATTLE ARENA</div>
+                        <button id="btn-restart-battle-center" class="btn-restart-sm">🔄 ULANG</button>
+                    </div>
+                    
+                    <div class="pool-instruction">⚡ GAME CEPAT-CEPATAN! 2 PEMAIN BISA NGGESER BERSAMAAN ⚡</div>
+                    
+                    <!-- FIXED DIGITS 0-9 GRID -->
+                    <div id="center-tokens-container" class="static-digits-grid"></div>
+
+                    <!-- DUAL PLAYER INDEPENDENT SELECTION INDICATORS -->
+                    <div class="selected-digit-indicators-dual">
+                        <div class="p1-selected-pill">
+                            🎮 P1: <span id="p1-selected-digit-val">-</span>
+                        </div>
+                        <div class="p2-selected-pill">
+                            🕹️ P2: <span id="p2-selected-digit-val">-</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PLAYER 2 ZONE (RIGHT) -->
+                <section class="player-zone p2-zone">
+                    <div class="player-header">
+                        <div class="player-tag">
+                            <span class="avatar">🕹️</span>
+                            <span id="p2-display-name">Pemain 2</span>
+                        </div>
+                        <div class="p-round-badge p2-badge">RONDE <span id="p2-round-disp">1</span>/<span class="total-rounds-disp">5</span></div>
+                        <div class="score-pill">
+                            <span class="score-label">POIN</span>
+                            <span class="score-val" id="p2-score">0</span>
+                        </div>
+                    </div>
+
+                    <!-- SINGLE SOAL CARD -->
+                    <div class="single-soal-card p2-soal-card">
+                        <div class="q-label-bar">
+                            <span>🎯 SOAL PEMAIN 2</span>
+                            <span class="mode-tag-pill" id="p2-mode-tag">Ribuan</span>
+                        </div>
+                        <div class="main-number-disp" id="p2-target-number">...</div>
+                        <div class="q-instruction">Seret ATAU Klik angka 0-9 di tengah, lalu isi kotak nilai tempat!</div>
+
+                        <!-- DIGIT PLACE VALUE TARGET BOXES GRID -->
+                        <div class="digit-boxes-grid" id="p2-digit-grid"></div>
+
+                        <!-- ACTION & FEEDBACK -->
+                        <div class="player-actions-bar">
+                            <button id="p2-btn-check" class="btn-check-answer p2-btn-check">✔️ CEK JAWABAN P2</button>
+                            <div class="feedback-msg" id="p2-feedback"></div>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </section>
+
+        <!-- CONTENT TAB 2: MATERI GURU -->
+        <section id="tab-materi" class="tab-content">
+            <div class="materi-card">
+                <div class="materi-header">
+                    <div>
+                        <h2>📚 MATERI INTERAKTIF GURU</h2>
+                        <p>Ketikkan bilangan di bawah ini untuk menampilkan terjemahan warna-warni yang sesuai dengan kelompok nilai tempatnya!</p>
+                    </div>
+                    <button id="btn-speak-materi" class="btn-primary-lg">🔊 Dengarkan Pengucapan</button>
+                </div>
+
+                <!-- TEACHER INPUT SECTION -->
+                <div class="teacher-input-card">
+                    <label>✍️ MASUKKAN ANGKA MATERI GURU:</label>
+                    <div class="input-with-presets">
+                        <input type="text" id="materi-num-input" value="234.050.000.000" maxlength="20" placeholder="Ketik angka di sini...">
+                    </div>
+
+                    <!-- PRESET EXAMPLES FOR TEACHING -->
+                    <div class="preset-pills">
+                        <span class="preset-label">💡 Contoh Cepat Materi:</span>
+                        <button class="btn-preset" data-num="250.000.000">📌 250 Juta</button>
+                        <button class="btn-preset" data-num="1.500.000.000">📌 1,5 Miliar</button>
+                        <button class="btn-preset" data-num="234.050.000.000">📌 234 Miliar 50 Juta</button>
+                        <button class="btn-preset" data-num="3.450.000.000.000">📌 3,45 Triliun</button>
+                        <button class="btn-preset" data-num="3.325.000.000.000">📌 APBN 3,325 Triliun</button>
+                    </div>
+                </div>
+
+                <!-- COLOR-CODED LIVE INDONESIAN TRANSLATION CARD -->
+                <div class="materi-box translation-box">
+                    <div class="materi-box-title">📖 TERJEMAHAN BAHASA INDONESIA (DENGAN WARNA NILAI TEMPAT):</div>
+                    <div class="materi-translation-text" id="materi-words-text">...</div>
+                    <div class="color-legend-bar">
+                        <span class="legend-item" style="color: #a855f7">🟣 Triliun</span>
+                        <span class="legend-item" style="color: #06b6d4">🔵 Miliar</span>
+                        <span class="legend-item" style="color: #10b981">🟢 Juta</span>
+                        <span class="legend-item" style="color: #f59e0b">🟡 Ribu</span>
+                        <span class="legend-item" style="color: #f97316">🟠 Satuan</span>
+                    </div>
+                </div>
+
+                <!-- PLACE VALUE TABLE BREAKDOWN -->
+                <div class="materi-box">
+                    <div class="materi-box-title">🧮 DEKOMPOSISI NILAI TEMPAT LENGKAP:</div>
+                    <div class="matrix-scroll-wrapper">
+                        <div class="matrix-grid" id="materi-matrix-grid"></div>
+                    </div>
+                </div>
+
+                <!-- EXPANDED NOTATION -->
+                <div class="materi-box expansion-box">
+                    <div class="materi-box-title">📐 BENTUK EKSPANSI (NOTASI MATEMATIS):</div>
+                    <div class="readout-text code-font" id="materi-expansion-text">...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- WELCOME HUB OVERLAY (SD 96/IV KOTA JAMBI) -->
+        <div id="welcome-hub-overlay" class="modal-overlay active">
+            <div class="modal-card hub-modal-card">
+                <div class="school-header-badge">🏫 SD 96/IV KOTA JAMBI</div>
+                <h2>SELAMAT DATANG DI SD 96/IV KOTA JAMBI</h2>
+                <p class="modal-desc">Media Pembelajaran Interaktif Matematika Kelas 5 SD - Bilangan Cacah s.d. Triliunan</p>
+                
+                <div class="hub-cards-container">
+                    <!-- OPTION 1: BATTLE -->
+                    <div class="hub-option-card hub-battle-card" id="btn-select-hub-battle">
+                        <div class="hub-card-icon">⚔️</div>
+                        <h3>GAME BATTLE 2 PEMAIN</h3>
+                        <p>Game edukasi tanding 2 pemain secara langsung (head-to-head) menyusun nilai tempat!</p>
+                        <button class="btn-primary-lg">⚔️ MAIN BATTLE</button>
+                    </div>
+
+                    <!-- OPTION 2: MATERI GURU -->
+                    <div class="hub-option-card hub-materi-card" id="btn-select-hub-materi">
+                        <div class="hub-card-icon">📚</div>
+                        <h3>MATERI INTERAKTIF GURU</h3>
+                        <p>Media presentasi interaktif untuk menerjemahkan angka ke Bahasa Indonesia & dekomposisi nilai tempat!</p>
+                        <button class="btn-primary-lg btn-materi-accent">📚 BUKA MATERI</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- START BATTLE MODAL OVERLAY -->
+        <div id="start-overlay" class="modal-overlay">
+            <div class="modal-card">
+                <div class="modal-badge">⚡ 2-PLAYER BATTLE ARENA</div>
+                <h2>BATTLE NILAI TEMPAT</h2>
+                <p class="modal-desc">Di setiap ronde, soal akan diacak variatif (Miliaran, Jutaan, Ribuan, Ratusan Ribu, Puluhan Ribu, dll.) dengan bobot soal sama untuk kedua pemain!</p>
+                
+                <div class="player-setup">
+                    <div class="setup-card p1-setup">
+                        <span class="p-avatar">🎮</span>
+                        <input type="text" id="p1-name-input" value="Budi" maxlength="12">
+                        <span class="p-side">Pemain 1 (Sisi Kiri)</span>
+                    </div>
+                    <div class="vs-circle">VS</div>
+                    <div class="setup-card p2-setup">
+                        <span class="p-avatar">🕹️</span>
+                        <input type="text" id="p2-name-input" value="Siti" maxlength="12">
+                        <span class="p-side">Pemain 2 (Sisi Kanan)</span>
+                    </div>
+                </div>
+
+                <div class="mode-select">
+                    <label>Pilih Jenis Soal:</label>
+                    <div class="mode-options mode-options-4">
+                        <button class="btn-mode active" data-mode="campuran">🎲 Mode Campuran (Acak Variasi)</button>
+                        <button class="btn-mode" data-mode="triliunan">💎 Mode Triliunan</button>
+                        <button class="btn-mode" data-mode="miliaran">🏆 Mode Miliaran</button>
+                        <button class="btn-mode" data-mode="jutaan">🌟 Mode Jutaan</button>
+                        <button class="btn-mode" data-mode="ribuan">⚡ Mode Ribuan</button>
+                    </div>
+                </div>
+
+                <div class="rounds-select">
+                    <label>Pilih Jumlah Ronde:</label>
+                    <div class="rounds-options">
+                        <button class="btn-round" data-rounds="3">🏆 3 Ronde</button>
+                        <button class="btn-round active" data-rounds="5">👑 5 Ronde</button>
+                    </div>
+                </div>
+
+                <button id="btn-start-game" class="btn-primary-lg">⚔️ MULAI BATTLE SEKARANG!</button>
+            </div>
+        </div>
+
+        <!-- GAME OVER OVERLAY -->
+        <div id="victory-overlay" class="modal-overlay">
+            <div class="modal-card victory-card">
+                <canvas id="confetti-canvas"></canvas>
+                <div class="trophy-anim">🏆</div>
+                <h2 id="winner-title">PEMENANG BATTLE!</h2>
+                <p id="winner-subtitle">Selamat! Kamu adalah Master Nilai Tempat SD 96/IV Kota Jambi!</p>
+
+                <div class="final-scores">
+                    <div class="final-score-box p1-final">
+                        <span id="p1-final-name">Pemain 1</span>
+                        <span class="final-val" id="p1-final-score">0</span>
+                    </div>
+                    <div class="final-vs">VS</div>
+                    <div class="final-score-box p2-final">
+                        <span id="p2-final-name">Pemain 2</span>
+                        <span class="final-val" id="p2-final-score">0</span>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button id="btn-play-again" class="btn-primary-lg">⚔️ MAIN LAGI</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CERTIFICATE MODAL -->
+        <div id="cert-overlay" class="modal-overlay">
+            <div class="modal-card cert-card">
+                <button class="close-cert" id="btn-close-cert">✖</button>
+                <div class="cert-border">
+                    <div class="cert-header">
+                        <span>📜 SERTIFIKAT PRESTASI DIGITAL</span>
+                        <h2>SD 96/IV KOTA JAMBI</h2>
+                        <p>Diberikan kepada:</p>
+                    </div>
+                    <input type="text" id="cert-name-input" value="Budi Santoso" class="cert-name-field">
+                    <p class="cert-body">Atas keberhasilannya menguasai konsep Nilai Tempat (Miliaran, Jutaan, Ribuan, Ratusan, Puluhan, Satuan) pada Matematika Kelas 5 SD Kurikulum Merdeka.</p>
+                    <div class="cert-footer">
+                        <div>
+                            <strong>SD 96/IV Kota Jambi</strong>
+                            <p>Media Pembelajaran Interaktif Matematika</p>
+                        </div>
+                        <div class="cert-stamp">⭐ VERIFIED</div>
+                    </div>
+                </div>
+                <button class="btn-primary-lg" onclick="window.print()">🖨️ Cetak / Simpan PDF</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
