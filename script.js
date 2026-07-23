@@ -819,12 +819,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const op = btn.dataset.op;
                 btn.classList.toggle('selected', question.selectedOp === op);
 
-                btn.onclick = () => {
+                const handleOp = (e) => {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
                     if (question.isComplete) return;
                     AudioEngine.play('drag');
                     question.selectedOp = op;
                     renderPlayerSingleSoal(pKey, question);
                 };
+
+                btn.onpointerdown = handleOp;
+                btn.onclick = handleOp;
             });
         } else if (question.category === 'mengurutkan') {
             if (catTag) catTag.textContent = '🔢 MENGURUTKAN';
@@ -862,13 +866,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="slot-value-text">${placedVal ? placedVal : '[ ? ]'}</span>
                 `;
 
-                slotCard.onclick = () => {
+                const handleSlotClear = (e) => {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
                     if (placedVal && !question.isComplete) {
                         AudioEngine.play('drag');
                         question.targetSlots.splice(i, 1);
                         renderPlayerSingleSoal(pKey, question);
                     }
                 };
+
+                slotCard.onpointerdown = handleSlotClear;
+                slotCard.onclick = handleSlotClear;
 
                 sortSlots.appendChild(slotCard);
 
@@ -894,13 +902,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     poolBtn.className = 'btn-sort-num-vertical';
                     poolBtn.textContent = numStr;
 
-                    poolBtn.onclick = () => {
+                    const handlePoolSelect = (e) => {
+                        if (e) { e.preventDefault(); e.stopPropagation(); }
                         if (question.targetSlots.length < 3 && !question.isComplete) {
                             AudioEngine.play('drag');
                             question.targetSlots.push(numStr);
                             renderPlayerSingleSoal(pKey, question);
                         }
                     };
+
+                    poolBtn.onpointerdown = handlePoolSelect;
+                    poolBtn.onclick = handlePoolSelect;
 
                     sortPool.appendChild(poolBtn);
                 }
@@ -1497,6 +1509,25 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             renderSortingModule();
         });
+    }
+
+    // --- BATTLE CHECK ANSWER LISTENERS FOR SIMULTANEOUS 2-PLAYER SPEED RACE ---
+    if (dom.p1BtnCheck) {
+        const triggerCheckP1 = (e) => {
+            if (e) { e.preventDefault(); e.stopPropagation(); }
+            checkPlayerAnswer('p1');
+        };
+        dom.p1BtnCheck.addEventListener('pointerdown', triggerCheckP1);
+        dom.p1BtnCheck.addEventListener('click', triggerCheckP1);
+    }
+
+    if (dom.p2BtnCheck) {
+        const triggerCheckP2 = (e) => {
+            if (e) { e.preventDefault(); e.stopPropagation(); }
+            checkPlayerAnswer('p2');
+        };
+        dom.p2BtnCheck.addEventListener('pointerdown', triggerCheckP2);
+        dom.p2BtnCheck.addEventListener('click', triggerCheckP2);
     }
 
     if (dom.catBtns) {

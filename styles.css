@@ -518,6 +518,9 @@ input, textarea {
     font-weight: 900;
     cursor: pointer;
     transition: all 0.15s ease;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .p1-btn-check { background: var(--neo-cyan); }
