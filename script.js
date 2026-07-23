@@ -465,8 +465,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 const items1 = [genUniqueNumStr(), genUniqueNumStr(), genUniqueNumStr()];
                 const items2 = [genUniqueNumStr(), genUniqueNumStr(), genUniqueNumStr()];
 
-                const sorted1 = [...items1].sort((a, b) => sortDir === 'asc' ? (BigInt(a.numStr) < BigInt(b.numStr) ? -1 : 1) : (BigInt(a.numStr) > BigInt(b.numStr) ? -1 : 1));
-                const sorted2 = [...items2].sort((a, b) => sortDir === 'asc' ? (BigInt(a.numStr) < BigInt(b.numStr) ? -1 : 1) : (BigInt(a.numStr) > BigInt(b.numStr) ? -1 : 1));
+                const sorted1 = [...items1].sort((a, b) => {
+                    const vA = BigInt(a.numStr);
+                    const vB = BigInt(b.numStr);
+                    if (vA === vB) return 0;
+                    return sortDir === 'asc' ? (vA < vB ? -1 : 1) : (vA > vB ? -1 : 1);
+                });
+
+                const sorted2 = [...items2].sort((a, b) => {
+                    const vA = BigInt(a.numStr);
+                    const vB = BigInt(b.numStr);
+                    if (vA === vB) return 0;
+                    return sortDir === 'asc' ? (vA < vB ? -1 : 1) : (vA > vB ? -1 : 1);
+                });
 
                 seqP1.push({ category: 'mengurutkan', roundNum: r, levelKey, levelName: levelKey.replace(/_/g, ' ').toUpperCase(), sortDir, pool: items1.map(i => i.formatted), expectedSorted: sorted1.map(s => s.formatted) });
                 seqP2.push({ category: 'mengurutkan', roundNum: r, levelKey, levelName: levelKey.replace(/_/g, ' ').toUpperCase(), sortDir, pool: items2.map(i => i.formatted), expectedSorted: sorted2.map(s => s.formatted) });
@@ -649,7 +660,12 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (question.category === 'membandingkan') {
             if (catTag) catTag.textContent = '⚖️ MEMBANDINGKAN';
             if (instruction) instruction.textContent = 'Pilih operator perbandingan yang tepat (> , < , =)!';
-            numDisplay.textContent = `${question.numA}  ❓  ${question.numB}`;
+            
+            if (question.selectedOp) {
+                numDisplay.textContent = `${question.numA}   [ ${question.selectedOp} ]   ${question.numB}`;
+            } else {
+                numDisplay.textContent = `${question.numA}   ❓   ${question.numB}`;
+            }
 
             digitGrid.style.display = 'none';
             compareGrid.style.display = 'flex';
@@ -673,9 +689,18 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         } else if (question.category === 'mengurutkan') {
             if (catTag) catTag.textContent = '🔢 MENGURUTKAN';
-            const dirLabel = question.sortDir === 'asc' ? 'TERKECIL ➔ TERBESAR ↗️' : 'TERBESAR ➔ TERKECIL ↘️';
-            if (instruction) instruction.textContent = `Klik angka di bawah untuk menyusun urutan dari ${dirLabel}!`;
-            numDisplay.textContent = `${question.sortDir === 'asc' ? 'TERKECIL ➔ TERBESAR' : 'TERBESAR ➔ TERKECIL'}`;
+            const sortBadge = pKey === 'p1' ? document.getElementById('p1-sort-badge') : document.getElementById('p2-sort-badge');
+            
+            const isAsc = question.sortDir === 'asc';
+            const dirLabel = isAsc ? '↗️ TERKECIL KE TERBESAR (NAIK)' : '↘️ TERBESAR KE TERKECIL (TURUN)';
+            
+            if (sortBadge) {
+                sortBadge.textContent = dirLabel;
+                sortBadge.className = `sort-dir-badge ${isAsc ? 'asc' : 'desc'}`;
+            }
+
+            if (instruction) instruction.textContent = `Pilih 3 angka di bawah untuk mengisi urutan dari ${isAsc ? 'TERKECIL ke TERBESAR' : 'TERBESAR ke TERKECIL'}!`;
+            numDisplay.textContent = `${isAsc ? 'TERKECIL ➔ TERBESAR' : 'TERBESAR ➔ TERKECIL'}`;
 
             digitGrid.style.display = 'none';
             compareGrid.style.display = 'none';
@@ -685,15 +710,20 @@ document.addEventListener('DOMContentLoaded', () => {
             if (dom.centerTokensContainer) dom.centerTokensContainer.style.display = 'none';
             if (dom.centerSelectionIndicators) dom.centerSelectionIndicators.style.display = 'none';
 
-            // Target Slots
+            // Target Slots (Vertical Ke Bawah)
             sortSlots.innerHTML = '';
             for (let i = 0; i < 3; i++) {
                 const placedVal = question.targetSlots[i];
-                const slotBtn = document.createElement('div');
-                slotBtn.className = `sort-target-slot-pill ${placedVal ? 'filled' : ''}`;
-                slotBtn.textContent = placedVal ? `#${i + 1}: ${placedVal}` : `#${i + 1}: [ ? ]`;
+                const slotCard = document.createElement('div');
+                slotCard.className = `sort-slot-card-vertical ${placedVal ? 'filled' : ''}`;
+                
+                const rankName = i === 0 ? 'URUTAN #1 (ATAS)' : (i === 1 ? 'URUTAN #2 (TENGAH)' : 'URUTAN #3 (BAWAH)');
+                slotCard.innerHTML = `
+                    <span class="slot-rank-label">${rankName}</span>
+                    <span class="slot-value-text">${placedVal ? placedVal : '[ ? ]'}</span>
+                `;
 
-                slotBtn.onclick = () => {
+                slotCard.onclick = () => {
                     if (placedVal && !question.isComplete) {
                         AudioEngine.play('drag');
                         question.targetSlots.splice(i, 1);
@@ -701,16 +731,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 };
 
-                sortSlots.appendChild(slotBtn);
+                sortSlots.appendChild(slotCard);
+
+                if (i < 2) {
+                    const arrowDiv = document.createElement('div');
+                    arrowDiv.className = 'sort-vertical-arrow';
+                    arrowDiv.textContent = '👇';
+                    sortSlots.appendChild(arrowDiv);
+                }
             }
 
-            // Unplaced Pool
+            // Unplaced Pool (Vertical Ke Bawah)
             sortPool.innerHTML = '';
+            const poolTitle = document.createElement('div');
+            poolTitle.className = 'pool-title-sm';
+            poolTitle.textContent = '👇 PILIH ANGKA UNTUK MENGISI URUTAN DI ATAS:';
+            sortPool.appendChild(poolTitle);
+
             question.pool.forEach(numStr => {
                 const isPlaced = question.targetSlots.includes(numStr);
                 if (!isPlaced) {
                     const poolBtn = document.createElement('button');
-                    poolBtn.className = 'btn-sort-num-pill';
+                    poolBtn.className = 'btn-sort-num-vertical';
                     poolBtn.textContent = numStr;
 
                     poolBtn.onclick = () => {
