@@ -609,23 +609,55 @@ input, textarea {
 }
 
 .digit-token-static {
-    background: var(--neo-white);
-    border: var(--neo-border);
-    box-shadow: var(--neo-shadow-sm);
+    background: var(--neo-yellow);
+    border: 2.5px solid var(--neo-black);
+    box-shadow: 3px 3px 0px #0f172a;
     color: var(--neo-black);
     font-family: var(--font-heading);
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     font-weight: 900;
-    width: 48px;
-    height: 48px;
+    width: 52px;
+    height: 52px;
     border-radius: 10px;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
+    padding: 3px;
     cursor: pointer;
     transition: all 0.15s ease;
     position: relative;
+    user-select: none;
 }
+
+.token-digit-num {
+    font-size: 1.3rem;
+    font-weight: 900;
+    line-height: 1;
+    margin-top: 2px;
+}
+
+.token-tap-btns {
+    display: flex;
+    width: 100%;
+    gap: 2px;
+    justify-content: space-between;
+}
+
+.btn-tap-p1, .btn-tap-p2 {
+    font-size: 0.55rem;
+    font-weight: 900;
+    padding: 1px 3px;
+    border-radius: 3px;
+    border: 1px solid var(--neo-black);
+    cursor: pointer;
+    flex: 1;
+    text-align: center;
+    line-height: 1.1;
+}
+
+.btn-tap-p1 { background: var(--neo-cyan); color: var(--neo-black); }
+.btn-tap-p2 { background: var(--neo-pink); color: var(--neo-black); }
 
 .digit-token-static:hover {
     transform: translate(-2px, -2px);

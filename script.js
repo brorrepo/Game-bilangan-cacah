@@ -197,17 +197,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- TAB NAVIGATION ENGINE ---
     function switchTab(targetTab) {
         dom.navBtns.forEach(b => b.classList.remove('active'));
         dom.tabContents.forEach(tc => tc.classList.remove('active'));
 
         const btn = document.querySelector(`.nav-btn[data-tab="${targetTab}"]`);
         if (btn) btn.classList.add('active');
-        document.getElementById(targetTab).classList.add('active');
+        const targetEl = document.getElementById(targetTab);
+        if (targetEl) targetEl.classList.add('active');
         state.activeTab = targetTab;
 
         if (targetTab === 'tab-materi') renderMateriTab();
+        if (targetTab === 'tab-battle') dom.startOverlay.classList.add('active');
     }
 
     dom.navBtns.forEach(btn => {
@@ -530,9 +531,69 @@ document.addEventListener('DOMContentLoaded', () => {
                 sortDir: qData.sortDir,
                 pool: [...qData.pool],
                 targetSlots: [],
-                expectedSorted: [...qData.expectedSorted],
                 isComplete: false
             };
+        }
+    }
+
+    function renderStaticCenterDigitsGrid() {
+        if (!dom.centerTokensContainer) return;
+        dom.centerTokensContainer.innerHTML = '';
+
+        for (let d = 0; d <= 9; d++) {
+            const token = document.createElement('div');
+            token.className = 'digit-token-static';
+            token.draggable = true;
+            token.dataset.digit = d;
+
+            token.innerHTML = `
+                <span class="token-digit-num">${d}</span>
+                <div class="token-tap-btns">
+                    <button class="btn-tap-p1" title="Pilih P1">P1</button>
+                    <button class="btn-tap-p2" title="Pilih P2">P2</button>
+                </div>
+            `;
+
+            token.addEventListener('dragstart', (e) => {
+                AudioEngine.play('drag');
+                e.dataTransfer.setData('text/plain', d.toString());
+            });
+
+            const btnP1 = token.querySelector('.btn-tap-p1');
+            if (btnP1) {
+                btnP1.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    AudioEngine.play('drag');
+                    state.p1SelectedDigitVal = d;
+                    if (dom.p1SelectedDigitValDisp) dom.p1SelectedDigitValDisp.textContent = d;
+                    token.classList.add('selected-p1');
+                    setTimeout(() => token.classList.remove('selected-p1'), 500);
+                });
+            }
+
+            const btnP2 = token.querySelector('.btn-tap-p2');
+            if (btnP2) {
+                btnP2.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    AudioEngine.play('drag');
+                    state.p2SelectedDigitVal = d;
+                    if (dom.p2SelectedDigitValDisp) dom.p2SelectedDigitValDisp.textContent = d;
+                    token.classList.add('selected-p2');
+                    setTimeout(() => token.classList.remove('selected-p2'), 500);
+                });
+            }
+
+            token.addEventListener('click', () => {
+                AudioEngine.play('drag');
+                state.p1SelectedDigitVal = d;
+                state.p2SelectedDigitVal = d;
+                if (dom.p1SelectedDigitValDisp) dom.p1SelectedDigitValDisp.textContent = d;
+                if (dom.p2SelectedDigitValDisp) dom.p2SelectedDigitValDisp.textContent = d;
+                token.classList.add('selected-both');
+                setTimeout(() => token.classList.remove('selected-both'), 500);
+            });
+
+            dom.centerTokensContainer.appendChild(token);
         }
     }
 
