@@ -1458,10 +1458,91 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // MATERI SUB-TAB NAVIGATION LISTENERS
+    // MAIN HEADER TAB NAVIGATION LISTENERS (INSTANT RESPONSE)
+    if (dom.navBtns) {
+        dom.navBtns.forEach(btn => {
+            const handleTabSwitch = (e) => {
+                if (e) { e.preventDefault(); e.stopPropagation(); }
+                AudioEngine.play('drag');
+                dom.navBtns.forEach(b => b.classList.remove('active'));
+                dom.tabContents.forEach(tc => tc.classList.remove('active'));
+
+                btn.classList.add('active');
+                const targetTab = btn.dataset.tab;
+                const targetEl = document.getElementById(targetTab);
+                if (targetEl) targetEl.classList.add('active');
+
+                if (targetTab === 'tab-battle') {
+                    if (dom.startOverlay) dom.startOverlay.classList.add('active');
+                } else if (targetTab === 'tab-materi') {
+                    renderMateriTab();
+                    renderCompareModule();
+                    renderSortingModule();
+                }
+            };
+
+            btn.addEventListener('pointerdown', handleTabSwitch);
+            btn.addEventListener('click', handleTabSwitch);
+        });
+    }
+
+    // WELCOME HUB & HOME MENU LISTENERS
+    if (dom.btnSelectHubBattle) {
+        const handleSelectBattle = (e) => {
+            if (e) { e.preventDefault(); e.stopPropagation(); }
+            AudioEngine.play('drag');
+            if (dom.welcomeHubOverlay) dom.welcomeHubOverlay.classList.remove('active');
+            if (dom.navBtns) dom.navBtns.forEach(b => b.classList.remove('active'));
+            if (dom.tabContents) dom.tabContents.forEach(tc => tc.classList.remove('active'));
+            
+            const battleTab = document.querySelector('.nav-btn[data-tab="tab-battle"]');
+            if (battleTab) battleTab.classList.add('active');
+            const battleContent = document.getElementById('tab-battle');
+            if (battleContent) battleContent.classList.add('active');
+
+            if (dom.startOverlay) dom.startOverlay.classList.add('active');
+        };
+        dom.btnSelectHubBattle.addEventListener('pointerdown', handleSelectBattle);
+        dom.btnSelectHubBattle.addEventListener('click', handleSelectBattle);
+    }
+
+    if (dom.btnSelectHubMateri) {
+        const handleSelectMateri = (e) => {
+            if (e) { e.preventDefault(); e.stopPropagation(); }
+            AudioEngine.play('drag');
+            if (dom.welcomeHubOverlay) dom.welcomeHubOverlay.classList.remove('active');
+            if (dom.navBtns) dom.navBtns.forEach(b => b.classList.remove('active'));
+            if (dom.tabContents) dom.tabContents.forEach(tc => tc.classList.remove('active'));
+            
+            const materiTab = document.querySelector('.nav-btn[data-tab="tab-materi"]');
+            if (materiTab) materiTab.classList.add('active');
+            const materiContent = document.getElementById('tab-materi');
+            if (materiContent) materiContent.classList.add('active');
+
+            renderMateriTab();
+            renderCompareModule();
+            renderSortingModule();
+        };
+        dom.btnSelectHubMateri.addEventListener('pointerdown', handleSelectMateri);
+        dom.btnSelectHubMateri.addEventListener('click', handleSelectMateri);
+    }
+
+    if (dom.btnHomeMenu) {
+        const handleGoHome = (e) => {
+            if (e) { e.preventDefault(); e.stopPropagation(); }
+            AudioEngine.play('drag');
+            if (dom.welcomeHubOverlay) dom.welcomeHubOverlay.classList.add('active');
+        };
+        dom.btnHomeMenu.addEventListener('pointerdown', handleGoHome);
+        dom.btnHomeMenu.addEventListener('click', handleGoHome);
+    }
+
+    // MATERI SUB-TAB NAVIGATION LISTENERS (INSTANT RESPONSE)
     if (dom.subTabBtns) {
         dom.subTabBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
+            const handleSubTabSwitch = (e) => {
+                if (e) { e.preventDefault(); e.stopPropagation(); }
+                AudioEngine.play('drag');
                 dom.subTabBtns.forEach(b => b.classList.remove('active'));
                 dom.materiSubContents.forEach(sc => sc.classList.remove('active'));
 
@@ -1475,7 +1556,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (targetSub === 'subtab-dekomposisi') renderMateriTab();
                 if (targetSub === 'subtab-banding') renderCompareModule();
                 if (targetSub === 'subtab-urut') renderSortingModule();
-            });
+            };
+
+            btn.addEventListener('pointerdown', handleSubTabSwitch);
+            btn.addEventListener('click', handleSubTabSwitch);
         });
     }
 
@@ -1757,12 +1841,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, { passive: false });
 
-    // 3. Prevent double-tap to zoom
+    // 3. Prevent double-tap to zoom safely without blocking button/tab clicks
     let lastTouchEndTime = 0;
     document.addEventListener('touchend', (e) => {
         const now = Date.now();
         if (now - lastTouchEndTime <= 300) {
-            if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+            const tag = e.target.tagName;
+            const isClickable = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'BUTTON' || 
+                                e.target.closest('button') || e.target.closest('.nav-btn') || 
+                                e.target.closest('.sub-tab-btn') || e.target.closest('.btn-preset') ||
+                                e.target.closest('.btn-compare-preset') || e.target.closest('.btn-sort-preset') ||
+                                e.target.closest('.modal-card') || e.target.closest('.close-modal-btn');
+            if (!isClickable) {
                 e.preventDefault();
             }
         }
