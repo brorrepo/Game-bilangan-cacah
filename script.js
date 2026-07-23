@@ -559,16 +559,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function placeNextEmptySlot(pKey, digitVal) {
-        const question = pKey === 'p1' ? state.p1Question : state.p2Question;
-        if (!question || question.category !== 'nilai_tempat' || question.isComplete) return;
+    function updateCenterTokenSelections() {
+        if (!dom.centerTokensContainer) return;
+        const tokens = dom.centerTokensContainer.querySelectorAll('.digit-token-static');
+        tokens.forEach(token => {
+            const digit = parseInt(token.dataset.digit);
+            const isP1 = (state.p1SelectedDigitVal === digit);
+            const isP2 = (state.p2SelectedDigitVal === digit);
 
-        const emptyIdx = question.targetSlots.findIndex(s => !s.filled);
-        if (emptyIdx !== -1) {
-            placeDigitInSlot(pKey, emptyIdx, digitVal);
-        } else {
-            placeDigitInSlot(pKey, 0, digitVal);
-        }
+            token.classList.remove('selected-p1', 'selected-p2', 'selected-both');
+            if (isP1 && isP2) token.classList.add('selected-both');
+            else if (isP1) token.classList.add('selected-p1');
+            else if (isP2) token.classList.add('selected-p2');
+        });
     }
 
     function renderStaticCenterDigitsGrid() {
@@ -584,88 +587,75 @@ document.addEventListener('DOMContentLoaded', () => {
             token.innerHTML = `
                 <span class="token-digit-num">${d}</span>
                 <div class="token-tap-btns">
-                    <button class="btn-tap-p1" title="P1 Tap">P1</button>
-                    <button class="btn-tap-p2" title="P2 Tap">P2</button>
+                    <button class="btn-tap-p1" title="Pilihan P1">P1</button>
+                    <button class="btn-tap-p2" title="Pilihan P2">P2</button>
                 </div>
             `;
 
-            // 1. Instant Tap P1 Button (Simultaneous)
+            // 1. P1 Selection Tap Handler (Sets digit selection for P1)
             const btnP1 = token.querySelector('.btn-tap-p1');
             if (btnP1) {
-                btnP1.addEventListener('pointerdown', (e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
+                const handleSelectP1 = (e) => {
+                    if (e) { e.stopPropagation(); e.preventDefault(); }
                     AudioEngine.play('drag');
                     state.p1SelectedDigitVal = d;
                     if (dom.p1SelectedDigitValDisp) dom.p1SelectedDigitValDisp.textContent = d;
-                    placeNextEmptySlot('p1', d);
-                    token.classList.add('selected-p1');
-                    setTimeout(() => token.classList.remove('selected-p1'), 400);
-                });
+                    updateCenterTokenSelections();
+                };
+                btnP1.addEventListener('pointerdown', handleSelectP1);
+                btnP1.addEventListener('touchstart', handleSelectP1, { passive: false });
             }
 
-            // 2. Instant Tap P2 Button (Simultaneous)
+            // 2. P2 Selection Tap Handler (Sets digit selection for P2)
             const btnP2 = token.querySelector('.btn-tap-p2');
             if (btnP2) {
-                btnP2.addEventListener('pointerdown', (e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
+                const handleSelectP2 = (e) => {
+                    if (e) { e.stopPropagation(); e.preventDefault(); }
                     AudioEngine.play('drag');
                     state.p2SelectedDigitVal = d;
                     if (dom.p2SelectedDigitValDisp) dom.p2SelectedDigitValDisp.textContent = d;
-                    placeNextEmptySlot('p2', d);
-                    token.classList.add('selected-p2');
-                    setTimeout(() => token.classList.remove('selected-p2'), 400);
-                });
+                    updateCenterTokenSelections();
+                };
+                btnP2.addEventListener('pointerdown', handleSelectP2);
+                btnP2.addEventListener('touchstart', handleSelectP2, { passive: false });
             }
 
-            // 3. Multi-Touch Concurrent Pointer Dragging for 2 Players + Instant Tap Fallback
-            token.addEventListener('pointerdown', (e) => {
-                if (e.target.classList.contains('btn-tap-p1') || e.target.classList.contains('btn-tap-p2')) return;
-                e.stopPropagation();
-
-                const startX = e.clientX;
-                const startY = e.clientY;
+            // 3. Ultra-Smooth Concurrent Dragging & Tapping Handler
+            const handleStart = (clientX, clientY, isTouch, touchId) => {
+                const startX = clientX;
+                const startY = clientY;
                 let isDragging = false;
                 let clone = null;
 
-                try {
-                    token.setPointerCapture(e.pointerId);
-                } catch (err) {}
+                const handleMove = (moveX, moveY) => {
+                    const dx = Math.abs(moveX - startX);
+                    const dy = Math.abs(moveY - startY);
 
-                const onPointerMove = (moveEvt) => {
-                    if (moveEvt.pointerId !== e.pointerId) return;
-                    const dx = Math.abs(moveEvt.clientX - startX);
-                    const dy = Math.abs(moveEvt.clientY - startY);
-
-                    if (!isDragging && (dx > 5 || dy > 5)) {
+                    if (!isDragging && (dx > 6 || dy > 6)) {
                         isDragging = true;
                         clone = document.createElement('div');
                         clone.className = 'floating-touch-token';
                         clone.textContent = d;
-                        clone.style.left = `${moveEvt.clientX - 26}px`;
-                        clone.style.top = `${moveEvt.clientY - 26}px`;
+                        clone.style.position = 'fixed';
+                        clone.style.pointerEvents = 'none';
+                        clone.style.zIndex = '999999';
+                        clone.style.left = `${moveX - 26}px`;
+                        clone.style.top = `${moveY - 26}px`;
                         document.body.appendChild(clone);
                     } else if (isDragging && clone) {
-                        clone.style.left = `${moveEvt.clientX - 26}px`;
-                        clone.style.top = `${moveEvt.clientY - 26}px`;
+                        clone.style.left = `${moveX - 26}px`;
+                        clone.style.top = `${moveY - 26}px`;
                     }
                 };
 
-                const onPointerUp = (upEvt) => {
-                    if (upEvt.pointerId !== e.pointerId) return;
-                    
-                    try { token.releasePointerCapture(e.pointerId); } catch (err) {}
-                    window.removeEventListener('pointermove', onPointerMove);
-                    window.removeEventListener('pointerup', onPointerUp);
-                    window.removeEventListener('pointercancel', onPointerUp);
-
+                const handleEnd = (endX, endY) => {
                     if (clone && clone.parentNode) {
                         clone.parentNode.removeChild(clone);
                     }
 
                     if (isDragging) {
-                        const droppedEl = document.elementFromPoint(upEvt.clientX, upEvt.clientY);
+                        // Precise Hit Testing under finger
+                        const droppedEl = document.elementFromPoint(endX, endY);
                         if (droppedEl) {
                             const digitBox = droppedEl.closest('.digit-box');
                             if (digitBox) {
@@ -677,25 +667,77 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                         }
                     } else {
-                        // Instant Tap Fallback: If pressed without dragging, fill P1 then P2 slot!
+                        // Tap main token body: select digit for both P1 and P2
                         AudioEngine.play('drag');
-                        const p1Q = state.p1Question;
-                        const p2Q = state.p2Question;
-                        if (p1Q && !p1Q.isComplete && p1Q.targetSlots.some(s => !s.filled)) {
-                            placeNextEmptySlot('p1', d);
-                        } else if (p2Q && !p2Q.isComplete && p2Q.targetSlots.some(s => !s.filled)) {
-                            placeNextEmptySlot('p2', d);
-                        }
+                        state.p1SelectedDigitVal = d;
+                        state.p2SelectedDigitVal = d;
+                        if (dom.p1SelectedDigitValDisp) dom.p1SelectedDigitValDisp.textContent = d;
+                        if (dom.p2SelectedDigitValDisp) dom.p2SelectedDigitValDisp.textContent = d;
+                        updateCenterTokenSelections();
                     }
                 };
 
-                window.addEventListener('pointermove', onPointerMove);
-                window.addEventListener('pointerup', onPointerUp);
-                window.addEventListener('pointercancel', onPointerUp);
+                if (isTouch) {
+                    const onTouchMove = (moveEvt) => {
+                        for (let i = 0; i < moveEvt.changedTouches.length; i++) {
+                            const t = moveEvt.changedTouches[i];
+                            if (t.identifier === touchId) {
+                                handleMove(t.clientX, t.clientY);
+                                break;
+                            }
+                        }
+                    };
+
+                    const onTouchEnd = (endEvt) => {
+                        for (let i = 0; i < endEvt.changedTouches.length; i++) {
+                            const t = endEvt.changedTouches[i];
+                            if (t.identifier === touchId) {
+                                window.removeEventListener('touchmove', onTouchMove);
+                                window.removeEventListener('touchend', onTouchEnd);
+                                window.removeEventListener('touchcancel', onTouchEnd);
+                                handleEnd(t.clientX, t.clientY);
+                                break;
+                            }
+                        }
+                    };
+
+                    window.addEventListener('touchmove', onTouchMove, { passive: false });
+                    window.addEventListener('touchend', onTouchEnd, { passive: false });
+                    window.addEventListener('touchcancel', onTouchEnd, { passive: false });
+                } else {
+                    const onPointerMove = (moveEvt) => {
+                        handleMove(moveEvt.clientX, moveEvt.clientY);
+                    };
+
+                    const onPointerUp = (upEvt) => {
+                        window.removeEventListener('pointermove', onPointerMove);
+                        window.removeEventListener('pointerup', onPointerUp);
+                        window.removeEventListener('pointercancel', onPointerUp);
+                        handleEnd(upEvt.clientX, upEvt.clientY);
+                    };
+
+                    window.addEventListener('pointermove', onPointerMove);
+                    window.addEventListener('pointerup', onPointerUp);
+                    window.addEventListener('pointercancel', onPointerUp);
+                }
+            };
+
+            token.addEventListener('touchstart', (e) => {
+                if (e.target.classList.contains('btn-tap-p1') || e.target.classList.contains('btn-tap-p2')) return;
+                const t = e.changedTouches[0];
+                if (t) handleStart(t.clientX, t.clientY, true, t.identifier);
+            }, { passive: true });
+
+            token.addEventListener('pointerdown', (e) => {
+                if (e.pointerType === 'touch') return;
+                if (e.target.classList.contains('btn-tap-p1') || e.target.classList.contains('btn-tap-p2')) return;
+                handleStart(e.clientX, e.clientY, false, null);
             });
 
             dom.centerTokensContainer.appendChild(token);
         }
+
+        updateCenterTokenSelections();
     }
 
     function initBattle() {
@@ -799,12 +841,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="digit-slot">${slot.filled ? slot.filledDigit : '?'}</span>
                 `;
 
-                boxEl.addEventListener('click', () => {
+                const handleBoxClick = (e) => {
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
                     const selectedVal = pKey === 'p1' ? state.p1SelectedDigitVal : state.p2SelectedDigitVal;
                     if (selectedVal !== null && !question.isComplete) {
                         placeDigitInSlot(pKey, idx, selectedVal);
+                    } else if (slot.filled && !question.isComplete) {
+                        AudioEngine.play('drag');
+                        slot.filled = false;
+                        slot.filledDigit = null;
+                        slot.status = 'neutral';
+                        renderPlayerSingleSoal(pKey, question);
                     }
-                });
+                };
+
+                boxEl.addEventListener('pointerdown', handleBoxClick);
+                boxEl.addEventListener('click', handleBoxClick);
 
                 boxEl.addEventListener('dragover', (e) => { e.preventDefault(); boxEl.classList.add('drag-over'); });
                 boxEl.addEventListener('dragleave', () => boxEl.classList.remove('drag-over'));
