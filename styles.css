@@ -1416,10 +1416,11 @@ input, textarea {
     display: none;
     flex-direction: column;
     gap: 14px;
+    width: 100%;
 }
 
 .materi-sub-content.active {
-    display: flex;
+    display: flex !important;
 }
 
 .materi-action-bar-top {

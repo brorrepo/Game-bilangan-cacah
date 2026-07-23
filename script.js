@@ -1458,83 +1458,98 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // MAIN HEADER TAB NAVIGATION LISTENERS (INSTANT RESPONSE)
-    if (dom.navBtns) {
-        dom.navBtns.forEach(btn => {
-            const handleTabSwitch = (e) => {
-                if (e) { e.preventDefault(); e.stopPropagation(); }
-                AudioEngine.play('drag');
-                dom.navBtns.forEach(b => b.classList.remove('active'));
-                dom.tabContents.forEach(tc => tc.classList.remove('active'));
+    // MAIN HEADER TAB NAVIGATION LISTENERS
+    const mainNavBtns = document.querySelectorAll('.nav-btn');
+    const mainTabContents = document.querySelectorAll('.tab-content');
 
-                btn.classList.add('active');
-                const targetTab = btn.dataset.tab;
-                const targetEl = document.getElementById(targetTab);
-                if (targetEl) targetEl.classList.add('active');
+    mainNavBtns.forEach(btn => {
+        const switchMainTab = () => {
+            AudioEngine.play('drag');
+            mainNavBtns.forEach(b => b.classList.remove('active'));
+            mainTabContents.forEach(tc => {
+                tc.classList.remove('active');
+                tc.style.display = 'none';
+            });
 
-                if (targetTab === 'tab-battle') {
-                    if (dom.startOverlay) dom.startOverlay.classList.add('active');
-                } else if (targetTab === 'tab-materi') {
-                    renderMateriTab();
-                    renderCompareModule();
-                    renderSortingModule();
-                }
-            };
+            btn.classList.add('active');
+            const targetTab = btn.getAttribute('data-tab');
+            const targetEl = document.getElementById(targetTab);
+            if (targetEl) {
+                targetEl.classList.add('active');
+                targetEl.style.display = 'flex';
+            }
 
-            btn.addEventListener('pointerdown', handleTabSwitch);
-            btn.addEventListener('click', handleTabSwitch);
-        });
-    }
+            if (targetTab === 'tab-battle') {
+                if (dom.startOverlay) dom.startOverlay.classList.add('active');
+            } else if (targetTab === 'tab-materi') {
+                renderMateriTab();
+                renderCompareModule();
+                renderSortingModule();
+            }
+        };
 
-    // WELCOME HUB & HOME MENU LISTENERS
+        btn.onpointerdown = switchMainTab;
+        btn.onclick = switchMainTab;
+    });
+
+    // WELCOME HUB LISTENERS
     if (dom.btnSelectHubBattle) {
-        const handleSelectBattle = (e) => {
-            if (e) { e.preventDefault(); e.stopPropagation(); }
+        const handleSelectBattle = () => {
             AudioEngine.play('drag');
             if (dom.welcomeHubOverlay) dom.welcomeHubOverlay.classList.remove('active');
-            if (dom.navBtns) dom.navBtns.forEach(b => b.classList.remove('active'));
-            if (dom.tabContents) dom.tabContents.forEach(tc => tc.classList.remove('active'));
+            mainNavBtns.forEach(b => b.classList.remove('active'));
+            mainTabContents.forEach(tc => {
+                tc.classList.remove('active');
+                tc.style.display = 'none';
+            });
             
             const battleTab = document.querySelector('.nav-btn[data-tab="tab-battle"]');
             if (battleTab) battleTab.classList.add('active');
             const battleContent = document.getElementById('tab-battle');
-            if (battleContent) battleContent.classList.add('active');
+            if (battleContent) {
+                battleContent.classList.add('active');
+                battleContent.style.display = 'flex';
+            }
 
             if (dom.startOverlay) dom.startOverlay.classList.add('active');
         };
-        dom.btnSelectHubBattle.addEventListener('pointerdown', handleSelectBattle);
-        dom.btnSelectHubBattle.addEventListener('click', handleSelectBattle);
+        dom.btnSelectHubBattle.onpointerdown = handleSelectBattle;
+        dom.btnSelectHubBattle.onclick = handleSelectBattle;
     }
 
     if (dom.btnSelectHubMateri) {
-        const handleSelectMateri = (e) => {
-            if (e) { e.preventDefault(); e.stopPropagation(); }
+        const handleSelectMateri = () => {
             AudioEngine.play('drag');
             if (dom.welcomeHubOverlay) dom.welcomeHubOverlay.classList.remove('active');
-            if (dom.navBtns) dom.navBtns.forEach(b => b.classList.remove('active'));
-            if (dom.tabContents) dom.tabContents.forEach(tc => tc.classList.remove('active'));
+            mainNavBtns.forEach(b => b.classList.remove('active'));
+            mainTabContents.forEach(tc => {
+                tc.classList.remove('active');
+                tc.style.display = 'none';
+            });
             
             const materiTab = document.querySelector('.nav-btn[data-tab="tab-materi"]');
             if (materiTab) materiTab.classList.add('active');
             const materiContent = document.getElementById('tab-materi');
-            if (materiContent) materiContent.classList.add('active');
+            if (materiContent) {
+                materiContent.classList.add('active');
+                materiContent.style.display = 'flex';
+            }
 
             renderMateriTab();
             renderCompareModule();
             renderSortingModule();
         };
-        dom.btnSelectHubMateri.addEventListener('pointerdown', handleSelectMateri);
-        dom.btnSelectHubMateri.addEventListener('click', handleSelectMateri);
+        dom.btnSelectHubMateri.onpointerdown = handleSelectMateri;
+        dom.btnSelectHubMateri.onclick = handleSelectMateri;
     }
 
     if (dom.btnHomeMenu) {
-        const handleGoHome = (e) => {
-            if (e) { e.preventDefault(); e.stopPropagation(); }
+        const handleGoHome = () => {
             AudioEngine.play('drag');
             if (dom.welcomeHubOverlay) dom.welcomeHubOverlay.classList.add('active');
         };
-        dom.btnHomeMenu.addEventListener('pointerdown', handleGoHome);
-        dom.btnHomeMenu.addEventListener('click', handleGoHome);
+        dom.btnHomeMenu.onpointerdown = handleGoHome;
+        dom.btnHomeMenu.onclick = handleGoHome;
     }
 
     // MATERI SUB-TAB NAVIGATION LISTENERS (100% RELIABLE)
@@ -1542,7 +1557,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const allMateriSubContents = document.querySelectorAll('.materi-sub-content');
 
     allSubTabBtns.forEach(btn => {
-        const switchSubTab = (e) => {
+        const switchSubTab = () => {
             AudioEngine.play('drag');
             allSubTabBtns.forEach(b => b.classList.remove('active'));
             allMateriSubContents.forEach(sc => {
@@ -1551,7 +1566,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             btn.classList.add('active');
-            const targetSub = btn.dataset.subtab || btn.getAttribute('data-subtab');
+            const targetSub = btn.getAttribute('data-subtab');
             const targetEl = document.getElementById(targetSub);
             if (targetEl) {
                 targetEl.classList.add('active');
@@ -1565,6 +1580,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (targetSub === 'subtab-urut') renderSortingModule();
         };
 
+        btn.onpointerdown = switchSubTab;
         btn.onclick = switchSubTab;
     });
 
