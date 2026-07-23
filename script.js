@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- APP GLOBAL STATE ---
     const state = {
         activeTab: 'tab-battle',
+        activeMateriSubTab: 'subtab-dekomposisi',
+        sortDir: 'asc',
         soundEnabled: true,
         
         // Battle State
@@ -95,12 +97,38 @@ document.addEventListener('DOMContentLoaded', () => {
         roundBtns: document.querySelectorAll('.btn-round'),
 
         // Materi Guru Elements
+        subTabBtns: document.querySelectorAll('.sub-tab-btn'),
+        materiSubContents: document.querySelectorAll('.materi-sub-content'),
+
+        // Subtab 1 Dekomposisi
         materiNumInput: document.getElementById('materi-num-input'),
         btnSpeakMateri: document.getElementById('btn-speak-materi'),
         materiWordsText: document.getElementById('materi-words-text'),
         materiMatrixGrid: document.getElementById('materi-matrix-grid'),
         materiExpansionText: document.getElementById('materi-expansion-text'),
-        btnPresets: document.querySelectorAll('.btn-preset')
+        btnPresets: document.querySelectorAll('.btn-preset'),
+
+        // Subtab 2 Membandingkan Bilangan
+        compareNumA: document.getElementById('compare-num-a'),
+        compareNumB: document.getElementById('compare-num-b'),
+        compareWordsA: document.getElementById('compare-words-a'),
+        compareWordsB: document.getElementById('compare-words-b'),
+        compareOpBadge: document.getElementById('compare-op-badge'),
+        compareOpText: document.getElementById('compare-op-text'),
+        compareVerdictBanner: document.getElementById('compare-verdict-banner'),
+        compareStepsList: document.getElementById('compare-steps-list'),
+        btnSpeakCompare: document.getElementById('btn-speak-compare'),
+        btnRandomCompare: document.getElementById('btn-random-compare'),
+        comparePresets: document.querySelectorAll('.btn-compare-preset'),
+
+        // Subtab 3 Mengurutkan Bilangan
+        sortNumInputs: document.querySelectorAll('.sort-num-input'),
+        btnSortDirs: document.querySelectorAll('.btn-sort-dir'),
+        btnRandomSort: document.getElementById('btn-random-sort'),
+        sortPresets: document.querySelectorAll('.btn-sort-preset'),
+        sortResultTitle: document.getElementById('sort-result-title'),
+        sortedCardsContainer: document.getElementById('sorted-cards-container'),
+        sortAnalysisSteps: document.getElementById('sort-analysis-steps')
     };
 
     // --- AUDIO SYNTH ENGINE ---
@@ -789,6 +817,320 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // --- TERBILANG PLAIN TEXT HELPER ---
+    function terbilangTextPlain(nStr) {
+        const raw = nStr.replace(/\D/g, '');
+        if (!raw || raw === '0') return 'Nol';
+        let n = BigInt(raw);
+        const satuan = ['', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima', 'Enam', 'Tujuh', 'Delapan', 'Sembilan', 'Sepuluh', 'Sebelas'];
+
+        function convertUnderThousand(num) {
+            let str = '';
+            num = Number(num);
+            if (num >= 100) {
+                const ratus = Math.floor(num / 100);
+                if (ratus === 1) str += 'Seratus ';
+                else str += satuan[ratus] + ' Ratus ';
+                num %= 100;
+            }
+            if (num >= 12) {
+                const puluh = Math.floor(num / 10);
+                str += satuan[puluh] + ' Puluh ';
+                num %= 10;
+                if (num > 0) str += satuan[num] + ' ';
+            } else if (num > 0) {
+                str += satuan[num] + ' ';
+            }
+            return str.trim();
+        }
+
+        const units = [
+            { name: 'Triliun', val: 1000000000000n },
+            { name: 'Miliar', val: 1000000000n },
+            { name: 'Juta', val: 1000000n },
+            { name: 'Ribu', val: 1000n }
+        ];
+
+        let segments = [];
+        let current = n;
+
+        for (let u of units) {
+            if (current >= u.val) {
+                let count = current / u.val;
+                current %= u.val;
+                let phrase = '';
+                if (u.name === 'Ribu' && count === 1n && n < 2000n) {
+                    phrase = 'Seribu';
+                } else {
+                    phrase = convertUnderThousand(count) + ' ' + u.name;
+                }
+                segments.push(phrase);
+            }
+        }
+
+        if (current > 0n) {
+            segments.push(convertUnderThousand(current));
+        }
+
+        return segments.join(' ');
+    }
+
+    // --- SUBTAB 2: MEMBANDINGKAN BILANGAN ENGINE ---
+    function renderCompareModule() {
+        if (!dom.compareNumA || !dom.compareNumB) return;
+        const rawA = dom.compareNumA.value.replace(/\D/g, '') || '0';
+        const rawB = dom.compareNumB.value.replace(/\D/g, '') || '0';
+
+        dom.compareNumA.value = formatDots(rawA);
+        dom.compareNumB.value = formatDots(rawB);
+
+        const valA = BigInt(rawA);
+        const valB = BigInt(rawB);
+
+        const wordsA = terbilangTextPlain(rawA);
+        const wordsB = terbilangTextPlain(rawB);
+        if (dom.compareWordsA) dom.compareWordsA.textContent = wordsA;
+        if (dom.compareWordsB) dom.compareWordsB.textContent = wordsB;
+
+        let op = '=';
+        let opText = 'Sama Dengan';
+        let opColor = '#fde047';
+        let verdictText = '';
+
+        if (valA > valB) {
+            op = '>';
+            opText = 'Lebih Besar Dari ( > )';
+            opColor = '#4ade80';
+            verdictText = `Bilangan A <strong>(${formatDots(rawA)})</strong> LEBIH BESAR dari Bilangan B <strong>(${formatDots(rawB)})</strong>`;
+        } else if (valA < valB) {
+            op = '<';
+            opText = 'Lebih Kecil Dari ( < )';
+            opColor = '#f87171';
+            verdictText = `Bilangan A <strong>(${formatDots(rawA)})</strong> LEBIH KECIL dari Bilangan B <strong>(${formatDots(rawB)})</strong>`;
+        } else {
+            op = '=';
+            opText = 'Sama Dengan ( = )';
+            opColor = '#38bdf8';
+            verdictText = `Bilangan A <strong>(${formatDots(rawA)})</strong> SAMA DENGAN Bilangan B <strong>(${formatDots(rawB)})</strong>`;
+        }
+
+        if (dom.compareOpBadge) {
+            dom.compareOpBadge.textContent = op;
+            dom.compareOpBadge.style.background = opColor;
+        }
+        if (dom.compareOpText) dom.compareOpText.textContent = opText;
+        if (dom.compareVerdictBanner) dom.compareVerdictBanner.innerHTML = verdictText;
+
+        const steps = [];
+        const lenA = rawA.length;
+        const lenB = rawB.length;
+
+        steps.push(`📌 <strong>Langkah 1 (Banyak Digit):</strong> Bilangan A mempunyai <strong>${lenA} digit</strong>, sedangkan Bilangan B mempunyai <strong>${lenB} digit</strong>.`);
+
+        if (lenA !== lenB) {
+            if (lenA > lenB) {
+                steps.push(`💡 <strong>Langkah 2 (Bandingkan Banyak Digit):</strong> Karena Bilangan A memiliki digit lebih banyak (${lenA} > ${lenB}), maka Bilangan A dipastikan <strong>lebih besar</strong> dari Bilangan B.`);
+            } else {
+                steps.push(`💡 <strong>Langkah 2 (Bandingkan Banyak Digit):</strong> Karena Bilangan B memiliki digit lebih banyak (${lenB} > ${lenA}), maka Bilangan A dipastikan <strong>lebih kecil</strong> dari Bilangan B.`);
+            }
+        } else {
+            steps.push(`💡 <strong>Langkah 2 (Bandingkan Nilai Tempat dari Paling Kiri):</strong> Karena jumlah digit sama (${lenA} digit), kita amati angka dari nilai tempat terbesar:`);
+            
+            let foundDiff = false;
+            const PV_NAMES_15 = ['Ratus Triliun', 'Puluh Triliun', 'Triliun', 'Ratus Miliar', 'Puluh Miliar', 'Miliar', 'Ratus Juta', 'Puluh Juta', 'Juta', 'Ratus Ribu', 'Puluh Ribu', 'Ribuan', 'Ratusan', 'Puluhan', 'Satuan'];
+            
+            const padA = rawA.padStart(15, '0');
+            const padB = rawB.padStart(15, '0');
+
+            for (let i = 0; i < 15; i++) {
+                if (padA[i] !== padB[i]) {
+                    const pvName = PV_NAMES_15[i];
+                    steps.push(`👉 <strong>Perbedaan Pertama Ada di Nilai Tempat ${pvName}:</strong> Digit A = <strong>${padA[i]}</strong> vs Digit B = <strong>${padB[i]}</strong>.`);
+                    if (padA[i] > padB[i]) {
+                        steps.push(`✅ <strong>Kesimpulan:</strong> Karena ${padA[i]} > ${padB[i]} pada nilai tempat ${pvName}, maka Bilangan A > Bilangan B.`);
+                    } else {
+                        steps.push(`✅ <strong>Kesimpulan:</strong> Karena ${padA[i]} < ${padB[i]} pada nilai tempat ${pvName}, maka Bilangan A < Bilangan B.`);
+                    }
+                    foundDiff = true;
+                    break;
+                }
+            }
+
+            if (!foundDiff) {
+                steps.push(`✅ <strong>Kesimpulan:</strong> Seluruh digit pada setiap nilai tempat dari kiri ke kanan sama persis, sehingga Bilangan A = Bilangan B.`);
+            }
+        }
+
+        if (dom.compareStepsList) {
+            dom.compareStepsList.innerHTML = steps.map(s => `<div class="reason-step-item">${s}</div>`).join('');
+        }
+    }
+
+    // --- SUBTAB 3: MENGURUTKAN BILANGAN ENGINE ---
+    function renderSortingModule() {
+        if (!dom.sortNumInputs || dom.sortNumInputs.length === 0) return;
+
+        const items = [];
+        dom.sortNumInputs.forEach((input, idx) => {
+            const raw = input.value.replace(/\D/g, '') || '0';
+            input.value = formatDots(raw);
+            items.push({
+                origIdx: idx + 1,
+                raw: raw,
+                val: BigInt(raw),
+                formatted: formatDots(raw),
+                words: terbilangTextPlain(raw)
+            });
+        });
+
+        const isAsc = state.sortDir === 'asc';
+        items.sort((a, b) => {
+            if (a.val < b.val) return isAsc ? -1 : 1;
+            if (a.val > b.val) return isAsc ? 1 : -1;
+            return 0;
+        });
+
+        if (dom.sortResultTitle) {
+            dom.sortResultTitle.textContent = isAsc 
+                ? '🏆 HASIL URUTAN DARI TERKECIL KE TERBESAR (NAIK ↗️):' 
+                : '🏆 HASIL URUTAN DARI TERBESAR KE TERKECIL (TURUN ↘️):';
+        }
+
+        if (dom.sortedCardsContainer) {
+            let html = '';
+            items.forEach((item, rankIdx) => {
+                html += `
+                    <div class="sorted-card-item">
+                        <span class="rank-badge">Urutan #${rankIdx + 1}</span>
+                        <span class="sorted-val-disp">${item.formatted}</span>
+                        <span class="sorted-words-sm">${item.words}</span>
+                    </div>
+                `;
+                if (rankIdx < items.length - 1) {
+                    html += `<div class="sort-arrow">➔</div>`;
+                }
+            });
+            dom.sortedCardsContainer.innerHTML = html;
+        }
+
+        if (dom.sortAnalysisSteps) {
+            const stepsHtml = items.map((item, rankIdx) => 
+                `<div class="reason-step-item">Urutan #${rankIdx + 1}: <strong>${item.formatted}</strong> (${item.raw.length} Digit - ${item.words})</div>`
+            ).join('');
+            dom.sortAnalysisSteps.innerHTML = `<div class="reasoning-steps-list"><span class="preset-label">📊 Rincian Urutan:</span>${stepsHtml}</div>`;
+        }
+    }
+
+    // MATERI SUB-TAB NAVIGATION LISTENERS
+    if (dom.subTabBtns) {
+        dom.subTabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                dom.subTabBtns.forEach(b => b.classList.remove('active'));
+                dom.materiSubContents.forEach(sc => sc.classList.remove('active'));
+
+                btn.classList.add('active');
+                const targetSub = btn.dataset.subtab;
+                const targetEl = document.getElementById(targetSub);
+                if (targetEl) targetEl.classList.add('active');
+
+                state.activeMateriSubTab = targetSub;
+
+                if (targetSub === 'subtab-dekomposisi') renderMateriTab();
+                if (targetSub === 'subtab-banding') renderCompareModule();
+                if (targetSub === 'subtab-urut') renderSortingModule();
+            });
+        });
+    }
+
+    // COMPARE LISTENERS
+    if (dom.compareNumA) dom.compareNumA.addEventListener('input', renderCompareModule);
+    if (dom.compareNumB) dom.compareNumB.addEventListener('input', renderCompareModule);
+
+    if (dom.comparePresets) {
+        dom.comparePresets.forEach(btn => {
+            btn.addEventListener('click', () => {
+                AudioEngine.play('drag');
+                dom.compareNumA.value = btn.dataset.a;
+                dom.compareNumB.value = btn.dataset.b;
+                renderCompareModule();
+            });
+        });
+    }
+
+    if (dom.btnRandomCompare) {
+        dom.btnRandomCompare.addEventListener('click', () => {
+            AudioEngine.play('drag');
+            const randDigits = Math.floor(Math.random() * 8) + 4;
+            let a = '', b = '';
+            for (let i = 0; i < randDigits; i++) {
+                a += i === 0 ? Math.floor(Math.random() * 9) + 1 : Math.floor(Math.random() * 10);
+                b += i === 0 ? Math.floor(Math.random() * 9) + 1 : Math.floor(Math.random() * 10);
+            }
+            dom.compareNumA.value = formatDots(a);
+            dom.compareNumB.value = formatDots(b);
+            renderCompareModule();
+        });
+    }
+
+    if (dom.btnSpeakCompare) {
+        dom.btnSpeakCompare.addEventListener('click', () => {
+            if ('speechSynthesis' in window && dom.compareVerdictBanner) {
+                const textToSpeak = dom.compareVerdictBanner.textContent;
+                const utterance = new SpeechSynthesisUtterance(textToSpeak);
+                utterance.lang = 'id-ID';
+                window.speechSynthesis.speak(utterance);
+            }
+        });
+    }
+
+    // SORTING LISTENERS
+    if (dom.sortNumInputs) {
+        dom.sortNumInputs.forEach(input => {
+            input.addEventListener('input', renderSortingModule);
+        });
+    }
+
+    if (dom.btnSortDirs) {
+        dom.btnSortDirs.forEach(btn => {
+            btn.addEventListener('click', () => {
+                dom.btnSortDirs.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                state.sortDir = btn.dataset.dir;
+                renderSortingModule();
+            });
+        });
+    }
+
+    if (dom.sortPresets) {
+        dom.sortPresets.forEach(btn => {
+            btn.addEventListener('click', () => {
+                AudioEngine.play('drag');
+                const nums = btn.dataset.nums.split(',');
+                nums.forEach((n, idx) => {
+                    const el = document.getElementById(`sort-in-${idx}`);
+                    if (el) el.value = formatDots(n);
+                });
+                renderSortingModule();
+            });
+        });
+    }
+
+    if (dom.btnRandomSort) {
+        dom.btnRandomSort.addEventListener('click', () => {
+            AudioEngine.play('drag');
+            for (let idx = 0; idx < 4; idx++) {
+                const randDigits = Math.floor(Math.random() * 7) + 4;
+                let num = '';
+                for (let i = 0; i < randDigits; i++) {
+                    num += i === 0 ? Math.floor(Math.random() * 9) + 1 : Math.floor(Math.random() * 10);
+                }
+                const el = document.getElementById(`sort-in-${idx}`);
+                if (el) el.value = formatDots(num);
+            }
+            renderSortingModule();
+        });
+    }
+
     // --- MODE & ROUNDS SELECTOR IN MODAL ---
     dom.modeBtns.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -939,4 +1281,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // INITIAL RENDER
     renderMateriTab();
+    renderCompareModule();
+    renderSortingModule();
 });

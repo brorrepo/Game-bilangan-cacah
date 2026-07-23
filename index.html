@@ -160,56 +160,180 @@
             <div class="materi-card">
                 <div class="materi-header">
                     <div>
-                        <h2>📚 MATERI INTERAKTIF GURU</h2>
-                        <p>Ketikkan bilangan di bawah ini untuk menampilkan terjemahan warna-warni yang sesuai dengan kelompok nilai tempatnya!</p>
-                    </div>
-                    <button id="btn-speak-materi" class="btn-primary-lg">🔊 Dengarkan Pengucapan</button>
-                </div>
-
-                <!-- TEACHER INPUT SECTION -->
-                <div class="teacher-input-card">
-                    <label>✍️ MASUKKAN ANGKA MATERI GURU:</label>
-                    <div class="input-with-presets">
-                        <input type="text" id="materi-num-input" value="234.050.000.000" maxlength="20" placeholder="Ketik angka di sini...">
-                    </div>
-
-                    <!-- PRESET EXAMPLES FOR TEACHING -->
-                    <div class="preset-pills">
-                        <span class="preset-label">💡 Contoh Cepat Materi:</span>
-                        <button class="btn-preset" data-num="250.000.000">📌 250 Juta</button>
-                        <button class="btn-preset" data-num="1.500.000.000">📌 1,5 Miliar</button>
-                        <button class="btn-preset" data-num="234.050.000.000">📌 234 Miliar 50 Juta</button>
-                        <button class="btn-preset" data-num="3.450.000.000.000">📌 3,45 Triliun</button>
-                        <button class="btn-preset" data-num="3.325.000.000.000">📌 APBN 3,325 Triliun</button>
+                        <h2>📚 MATERI INTERAKTIF GURU SD 96/IV KOTA JAMBI</h2>
+                        <p>Modul interaktif pembacaan, perbandingan, dan pengurutan bilangan cacah hingga triliunan.</p>
                     </div>
                 </div>
 
-                <!-- COLOR-CODED LIVE INDONESIAN TRANSLATION CARD -->
-                <div class="materi-box translation-box">
-                    <div class="materi-box-title">📖 TERJEMAHAN BAHASA INDONESIA (DENGAN WARNA NILAI TEMPAT):</div>
-                    <div class="materi-translation-text" id="materi-words-text">...</div>
-                    <div class="color-legend-bar">
-                        <span class="legend-item" style="color: #a855f7">🟣 Triliun</span>
-                        <span class="legend-item" style="color: #06b6d4">🔵 Miliar</span>
-                        <span class="legend-item" style="color: #10b981">🟢 Juta</span>
-                        <span class="legend-item" style="color: #f59e0b">🟡 Ribu</span>
-                        <span class="legend-item" style="color: #f97316">🟠 Satuan</span>
+                <!-- MATERI SUB-NAVIGATION TABS -->
+                <div class="materi-sub-tabs">
+                    <button class="sub-tab-btn active" data-subtab="subtab-dekomposisi">🧮 1. Dekomposisi & Terbilang</button>
+                    <button class="sub-tab-btn" data-subtab="subtab-banding">⚖️ 2. Membandingkan Bilangan</button>
+                    <button class="sub-tab-btn" data-subtab="subtab-urut">🔢 3. Mengurutkan Bilangan</button>
+                </div>
+
+                <!-- SUB-TAB 1: DEKOMPOSISI & TERBILANG -->
+                <div id="subtab-dekomposisi" class="materi-sub-content active">
+                    <div class="materi-action-bar-top">
+                        <span class="subtab-desc">Ketikkan bilangan di bawah ini untuk melihat terjemahan kata & dekomposisi nilai tempat!</span>
+                        <button id="btn-speak-materi" class="btn-primary-lg btn-sm-inline">🔊 Dengarkan Pengucapan</button>
+                    </div>
+
+                    <!-- TEACHER INPUT SECTION -->
+                    <div class="teacher-input-card">
+                        <label>✍️ MASUKKAN ANGKA MATERI GURU:</label>
+                        <div class="input-with-presets">
+                            <input type="text" id="materi-num-input" value="234.050.000.000" maxlength="20" placeholder="Ketik angka di sini...">
+                        </div>
+
+                        <!-- PRESET EXAMPLES FOR TEACHING -->
+                        <div class="preset-pills">
+                            <span class="preset-label">💡 Contoh Cepat Materi:</span>
+                            <button class="btn-preset" data-num="250.000.000">📌 250 Juta</button>
+                            <button class="btn-preset" data-num="1.500.000.000">📌 1,5 Miliar</button>
+                            <button class="btn-preset" data-num="234.050.000.000">📌 234 Miliar 50 Juta</button>
+                            <button class="btn-preset" data-num="3.450.000.000.000">📌 3,45 Triliun</button>
+                            <button class="btn-preset" data-num="3.325.000.000.000">📌 APBN 3,325 Triliun</button>
+                        </div>
+                    </div>
+
+                    <!-- COLOR-CODED LIVE INDONESIAN TRANSLATION CARD -->
+                    <div class="materi-box translation-box">
+                        <div class="materi-box-title">📖 TERJEMAHAN BAHASA INDONESIA (DENGAN WARNA NILAI TEMPAT):</div>
+                        <div class="materi-translation-text" id="materi-words-text">...</div>
+                        <div class="color-legend-bar">
+                            <span class="legend-item" style="color: #a855f7">🟣 Triliun</span>
+                            <span class="legend-item" style="color: #06b6d4">🔵 Miliar</span>
+                            <span class="legend-item" style="color: #10b981">🟢 Juta</span>
+                            <span class="legend-item" style="color: #f59e0b">🟡 Ribu</span>
+                            <span class="legend-item" style="color: #f97316">🟠 Satuan</span>
+                        </div>
+                    </div>
+
+                    <!-- PLACE VALUE TABLE BREAKDOWN -->
+                    <div class="materi-box">
+                        <div class="materi-box-title">🧮 DEKOMPOSISI NILAI TEMPAT LENGKAP:</div>
+                        <div class="matrix-scroll-wrapper">
+                            <div class="matrix-grid" id="materi-matrix-grid"></div>
+                        </div>
+                    </div>
+
+                    <!-- EXPANDED NOTATION -->
+                    <div class="materi-box expansion-box">
+                        <div class="materi-box-title">📐 BENTUK EKSPANSI (NOTASI MATEMATIS):</div>
+                        <div class="readout-text code-font" id="materi-expansion-text">...</div>
                     </div>
                 </div>
 
-                <!-- PLACE VALUE TABLE BREAKDOWN -->
-                <div class="materi-box">
-                    <div class="materi-box-title">🧮 DEKOMPOSISI NILAI TEMPAT LENGKAP:</div>
-                    <div class="matrix-scroll-wrapper">
-                        <div class="matrix-grid" id="materi-matrix-grid"></div>
+                <!-- SUB-TAB 2: MEMBANDINGKAN BILANGAN -->
+                <div id="subtab-banding" class="materi-sub-content">
+                    <div class="compare-module-card">
+                        <div class="module-title-bar">
+                            <div>
+                                <h3>⚖️ MODUL INTERAKTIF MEMBANDINGKAN DUA BILANGAN</h3>
+                                <p class="subtab-desc">Bandingkan dua bilangan besar untuk menentukan hubungan lebih besar (&gt;), lebih kecil (&lt;), atau sama dengan (=).</p>
+                            </div>
+                            <button id="btn-speak-compare" class="btn-primary-lg btn-sm-inline">🔊 Dengarkan Penjelasan</button>
+                        </div>
+
+                        <!-- INPUT COMPARISON CARDS -->
+                        <div class="compare-inputs-grid">
+                            <div class="compare-side-card card-a">
+                                <span class="side-badge badge-p1">BILANGAN A</span>
+                                <input type="text" id="compare-num-a" value="3.450.000.000" maxlength="20" placeholder="Masukkan Bilangan A...">
+                                <div class="side-words-disp" id="compare-words-a">...</div>
+                            </div>
+
+                            <div class="compare-operator-container">
+                                <div class="op-badge-glowing" id="compare-op-badge">&gt;</div>
+                                <span class="op-label" id="compare-op-text">Lebih Besar Dari</span>
+                            </div>
+
+                            <div class="compare-side-card card-b">
+                                <span class="side-badge badge-p2">BILANGAN B</span>
+                                <input type="text" id="compare-num-b" value="3.420.000.000" maxlength="20" placeholder="Masukkan Bilangan B...">
+                                <div class="side-words-disp" id="compare-words-b">...</div>
+                            </div>
+                        </div>
+
+                        <!-- PRESETS & RANDOM COMPARISON -->
+                        <div class="compare-presets-bar">
+                            <span class="preset-label">💡 Contoh Perbandingan:</span>
+                            <button class="btn-compare-preset" data-a="1.500.000.000" data-b="950.000.000">📌 Beda Digit (Miliar vs Juta)</button>
+                            <button class="btn-compare-preset" data-a="4.500.000.000" data-b="2.800.000.000">📌 Beda Digit Miliar</button>
+                            <button class="btn-compare-preset" data-a="3.450.000.000" data-b="3.420.000.000">📌 Beda Digit Juta</button>
+                            <button class="btn-compare-preset" data-a="500.000.000" data-b="500.000.000">📌 Bilangan Sama (=)</button>
+                            <button id="btn-random-compare" class="btn-preset-accent">🎲 Acak Soal Perbandingan</button>
+                        </div>
+
+                        <!-- EXPLANATION & REASONING CARD -->
+                        <div class="materi-box compare-result-box">
+                            <div class="materi-box-title">📖 KESIMPULAN & LANGKAH ANALISIS PERBANDINGAN:</div>
+                            <div class="compare-verdict-banner" id="compare-verdict-banner">
+                                ...
+                            </div>
+                            <div class="reasoning-steps-list" id="compare-steps-list">
+                                <!-- Generated by JS -->
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- EXPANDED NOTATION -->
-                <div class="materi-box expansion-box">
-                    <div class="materi-box-title">📐 BENTUK EKSPANSI (NOTASI MATEMATIS):</div>
-                    <div class="readout-text code-font" id="materi-expansion-text">...</div>
+                <!-- SUB-TAB 3: MENGURUTKAN BILANGAN -->
+                <div id="subtab-urut" class="materi-sub-content">
+                    <div class="sorting-module-card">
+                        <div class="module-title-bar">
+                            <div>
+                                <h3>🔢 MODUL INTERAKTIF MENGURUTKAN BILANGAN CACAH</h3>
+                                <p class="subtab-desc">Urutkan kelompok bilangan dari nilai terkecil ke terbesar (naik) atau terbesar ke terkecil (turun).</p>
+                            </div>
+                            <div class="sort-dir-selector">
+                                <button class="btn-sort-dir active" data-dir="asc">↗️ Terkecil ke Terbesar</button>
+                                <button class="btn-sort-dir" data-dir="desc">↘️ Terbesar ke Terkecil</button>
+                            </div>
+                        </div>
+
+                        <!-- NUMBERS INPUT GRID (4 NUMBERS) -->
+                        <div class="sorting-inputs-grid">
+                            <div class="sort-input-box">
+                                <span class="sort-box-tag">Bilangan 1:</span>
+                                <input type="text" class="sort-num-input" id="sort-in-0" value="2.500.000.000" placeholder="Angka 1...">
+                            </div>
+                            <div class="sort-input-box">
+                                <span class="sort-box-tag">Bilangan 2:</span>
+                                <input type="text" class="sort-num-input" id="sort-in-1" value="1.800.000.000" placeholder="Angka 2...">
+                            </div>
+                            <div class="sort-input-box">
+                                <span class="sort-box-tag">Bilangan 3:</span>
+                                <input type="text" class="sort-num-input" id="sort-in-2" value="3.100.000.000" placeholder="Angka 3...">
+                            </div>
+                            <div class="sort-input-box">
+                                <span class="sort-box-tag">Bilangan 4:</span>
+                                <input type="text" class="sort-num-input" id="sort-in-3" value="950.000.000" placeholder="Angka 4...">
+                            </div>
+                        </div>
+
+                        <div class="sorting-actions-bar">
+                            <span class="preset-label">💡 Preset Contoh Pengurutan:</span>
+                            <button class="btn-sort-preset" data-nums="2.500.000.000,1.800.000.000,3.100.000.000,950.000.000">📌 Contoh Miliar</button>
+                            <button class="btn-sort-preset" data-nums="145.000.000,275.000.000,50.000.000,320.000.000">📌 Contoh Juta</button>
+                            <button class="btn-sort-preset" data-nums="5.400.000,12.500.000,850.000,3.200.000">📌 Contoh Ribu/Juta</button>
+                            <button id="btn-random-sort" class="btn-preset-accent">🎲 Acak 4 Bilangan</button>
+                        </div>
+
+                        <!-- VISUAL ORDERED RESULT CARDS -->
+                        <div class="materi-box sort-result-box">
+                            <div class="materi-box-title" id="sort-result-title">🏆 HASIL URUTAN DARI TERKECIL KE TERBESAR:</div>
+                            <div class="sorted-cards-container" id="sorted-cards-container">
+                                <!-- Generated by JS -->
+                            </div>
+                            <div class="sort-analysis-steps" id="sort-analysis-steps">
+                                <!-- Step by step reasoning by JS -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
             </div>
         </section>
 
