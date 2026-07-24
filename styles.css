@@ -311,7 +311,27 @@ input, textarea {
     flex-direction: column;
     gap: 12px;
     position: relative;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+}
+
+/* Custom sleek scrollbar for player zones on mobile & desktop */
+.player-zone::-webkit-scrollbar {
+    width: 6px;
+}
+.player-zone::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.05);
+    border-radius: 3px;
+}
+.player-zone::-webkit-scrollbar-thumb {
+    background: var(--neo-yellow);
+    border: 1px solid var(--neo-black);
+    border-radius: 3px;
+}
+.player-zone::-webkit-scrollbar-thumb:hover {
+    background: var(--neo-orange);
 }
 
 .p1-zone { background: #f0fdf4; }
@@ -384,15 +404,18 @@ input, textarea {
 
 .main-number-disp {
     font-family: var(--font-heading);
-    font-size: 1.9rem;
+    font-size: clamp(1rem, 2.5vw, 1.9rem);
     font-weight: 900;
     color: var(--neo-black);
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     margin: 4px 0;
     background: #fef08a;
     border: var(--neo-border);
     padding: 6px;
     border-radius: 10px;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+    text-align: center;
 }
 
 .q-instruction {
@@ -412,6 +435,32 @@ input, textarea {
     justify-content: center;
     gap: 6px;
     margin-top: 4px;
+}
+
+/* Compact layout for High Place Values (7 - 13 Digits: Jutaan s.d. Triliunan) */
+.digit-boxes-grid.high-pv {
+    gap: 4px;
+}
+
+.digit-boxes-grid.high-pv .digit-box {
+    flex: 1 1 calc(14% - 4px);
+    max-width: calc(20% - 4px);
+    min-height: 52px;
+    padding: 2px 1px;
+}
+
+.digit-boxes-grid.high-pv .digit-pv-label {
+    font-size: 0.52rem;
+    padding: 1px 2px;
+    letter-spacing: -0.2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.digit-boxes-grid.high-pv .digit-slot {
+    font-size: 1.15rem;
+    margin-top: 1px;
 }
 
 .digit-box {
@@ -1752,26 +1801,26 @@ input, textarea {
     box-shadow: 0 0 0 3px var(--neo-black);
 }
 
-/* SORTING BATTLE GRID IN ARENA (VERTICAL LAYOUT KE BAWAH) */
+/* SORTING BATTLE GRID IN ARENA (COMPACT HYBRID LAYOUT) */
 .sorting-battle-grid {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     margin-top: 4px;
     width: 100%;
     align-items: center;
 }
 
 .sort-dir-badge {
-    padding: 6px 12px;
+    padding: 4px 10px;
     border-radius: 8px;
     font-family: var(--font-heading);
-    font-size: 0.8rem;
+    font-size: 0.76rem;
     font-weight: 900;
     text-align: center;
     border: 2px solid var(--neo-black);
     box-shadow: 2px 2px 0px #0f172a;
-    width: 90%;
+    width: 95%;
     box-sizing: border-box;
 }
 
@@ -1789,23 +1838,24 @@ input, textarea {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
     width: 100%;
 }
 
 .sort-slot-card-vertical {
-    width: 92%;
+    width: 95%;
     background: #f8fafc;
     border: 2px dashed var(--neo-black);
     box-shadow: 2px 2px 0px #0f172a;
-    border-radius: 10px;
-    padding: 6px 10px;
+    border-radius: 8px;
+    padding: 4px 8px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     cursor: pointer;
     transition: all 0.15s ease;
     box-sizing: border-box;
+    min-height: 38px;
 }
 
 .sort-slot-card-vertical.filled {
@@ -1816,60 +1866,74 @@ input, textarea {
 }
 
 .slot-rank-label {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 900;
     font-family: var(--font-heading);
     color: #475569;
     background: #e2e8f0;
-    padding: 2px 6px;
-    border-radius: 6px;
+    padding: 2px 5px;
+    border-radius: 5px;
     border: 1px solid var(--neo-black);
 }
 
 .slot-value-text {
     font-family: var(--font-heading);
-    font-size: 0.95rem;
+    font-size: clamp(0.72rem, 2vw, 0.9rem);
     font-weight: 900;
     color: var(--neo-black);
+    word-break: break-all;
+    overflow-wrap: anywhere;
+    line-height: 1.15;
 }
 
 .sort-vertical-arrow {
-    font-size: 0.8rem;
+    font-size: 0.65rem;
+    line-height: 1;
     font-weight: 900;
     color: var(--neo-black);
+    margin: -1px 0;
 }
 
 .sort-unplaced-pool-vertical {
     display: flex;
-    flex-direction: column;
-    gap: 5px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
     width: 100%;
+    justify-content: center;
     align-items: center;
     margin-top: 4px;
 }
 
 .pool-title-sm {
-    font-size: 0.7rem;
+    width: 100%;
+    font-size: 0.68rem;
     font-weight: 800;
     color: #475569;
     text-align: center;
 }
 
 .btn-sort-num-vertical {
-    width: 92%;
+    width: auto;
+    flex: 1 1 auto;
+    max-width: 100%;
+    min-width: 70px;
     background: var(--neo-white);
     border: 2px solid var(--neo-black);
     box-shadow: 2px 2px 0px #0f172a;
-    padding: 6px 10px;
+    padding: 5px 6px;
     border-radius: 8px;
     font-family: var(--font-heading);
-    font-size: 0.92rem;
+    font-size: clamp(0.72rem, 2vw, 0.88rem);
     font-weight: 900;
     color: var(--neo-black);
     cursor: pointer;
     transition: all 0.15s ease;
     text-align: center;
     box-sizing: border-box;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+    line-height: 1.15;
 }
 
 .btn-sort-num-vertical:hover {

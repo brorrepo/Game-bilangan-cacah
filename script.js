@@ -750,6 +750,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         state.p1CurrentRound = 1;
         state.p2CurrentRound = 1;
+        state.p1LastRenderedRound = 0;
+        state.p2LastRenderedRound = 0;
         state.p1FinishedAll = false;
         state.p2FinishedAll = false;
 
@@ -808,7 +810,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const sortPool = pKey === 'p1' ? dom.p1SortPool : dom.p2SortPool;
         const sortSlots = pKey === 'p1' ? dom.p1SortSlots : dom.p2SortSlots;
 
-        roundDisp.textContent = (pKey === 'p1' ? state.p1CurrentRound : state.p2CurrentRound);
+        // Auto reset scroll to top of player zone on new round or question
+        const playerZoneEl = document.querySelector(`.${pKey}-zone`);
+        const currentRound = (pKey === 'p1' ? state.p1CurrentRound : state.p2CurrentRound);
+        if (playerZoneEl && question && state[`${pKey}LastRenderedRound`] !== currentRound) {
+            playerZoneEl.scrollTop = 0;
+            state[`${pKey}LastRenderedRound`] = currentRound;
+        }
+
+        roundDisp.textContent = currentRound;
         modeTag.textContent = question.levelName;
 
         if (question.category === 'nilai_tempat') {
@@ -819,6 +829,12 @@ document.addEventListener('DOMContentLoaded', () => {
             digitGrid.style.display = 'flex';
             compareGrid.style.display = 'none';
             sortGrid.style.display = 'none';
+
+            if (question.targetSlots && question.targetSlots.length >= 7) {
+                digitGrid.classList.add('high-pv');
+            } else {
+                digitGrid.classList.remove('high-pv');
+            }
 
             if (dom.centerPoolInstruction) dom.centerPoolInstruction.textContent = '⚡ GAME CEPAT-CEPATAN! 2 PEMAIN BISA NGGESER BERSAMAAN ⚡';
             if (dom.centerTokensContainer) dom.centerTokensContainer.style.display = 'grid';
@@ -851,11 +867,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         slot.filled = false;
                         slot.filledDigit = null;
                         slot.status = 'neutral';
-                        renderPlayerSingleSoal(pKey, question);
+                        updateDigitBoxDOM(boxEl, slot);
                     }
                 };
 
-                boxEl.addEventListener('pointerdown', handleBoxClick);
                 boxEl.addEventListener('click', handleBoxClick);
 
                 boxEl.addEventListener('dragover', (e) => { e.preventDefault(); boxEl.classList.add('drag-over'); });
@@ -894,16 +909,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 const op = btn.dataset.op;
                 btn.classList.toggle('selected', question.selectedOp === op);
 
-                const handleOp = (e) => {
+                const newHandler = (e) => {
                     if (e) { e.preventDefault(); e.stopPropagation(); }
                     if (question.isComplete) return;
                     AudioEngine.play('drag');
                     question.selectedOp = op;
-                    renderPlayerSingleSoal(pKey, question);
+                    // Surgical update: toggle selected class + update display
+                    opBtns.forEach(b => b.classList.toggle('selected', b.dataset.op === op));
+                    if (numDisplay) numDisplay.textContent = `${question.numA}   [ ${op} ]   ${question.numB}`;
                 };
 
-                btn.onpointerdown = handleOp;
-                btn.onclick = handleOp;
+                btn.onclick = newHandler;
             });
         } else if (question.category === 'mengurutkan') {
             if (catTag) catTag.textContent = '🔢 MENGURUTKAN';
@@ -942,7 +958,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
 
                 const handleSlotClear = (e) => {
-                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    if (e) { e.stopPropagation(); }
                     if (placedVal && !question.isComplete) {
                         AudioEngine.play('drag');
                         question.targetSlots.splice(i, 1);
@@ -950,7 +966,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 };
 
-                slotCard.onpointerdown = handleSlotClear;
                 slotCard.onclick = handleSlotClear;
 
                 sortSlots.appendChild(slotCard);
@@ -986,13 +1001,22 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     };
 
-                    poolBtn.onpointerdown = handlePoolSelect;
                     poolBtn.onclick = handlePoolSelect;
 
                     sortPool.appendChild(poolBtn);
                 }
             });
         }
+    }
+
+    // Surgical DOM update for a single digit box (avoids full re-render)
+    function updateDigitBoxDOM(boxEl, slot) {
+        const digitSlotEl = boxEl.querySelector('.digit-slot');
+        if (digitSlotEl) digitSlotEl.textContent = slot.filled ? slot.filledDigit : '?';
+        boxEl.classList.toggle('filled', !!slot.filled);
+        boxEl.classList.remove('checked-correct', 'checked-wrong');
+        if (slot.status === 'correct') boxEl.classList.add('checked-correct');
+        if (slot.status === 'wrong') boxEl.classList.add('checked-wrong');
     }
 
     function placeDigitInSlot(pKey, slotIdx, digitVal) {
@@ -1004,7 +1028,14 @@ document.addEventListener('DOMContentLoaded', () => {
         targetSlot.filledDigit = digitVal;
         targetSlot.status = 'neutral';
 
-        renderPlayerSingleSoal(pKey, question);
+        // Surgical update: only update the specific box instead of full re-render
+        const digitGrid = pKey === 'p1' ? dom.p1DigitGrid : dom.p2DigitGrid;
+        const boxEl = digitGrid.querySelector(`.digit-box[data-slot-index="${slotIdx}"]`);
+        if (boxEl) {
+            updateDigitBoxDOM(boxEl, targetSlot);
+        } else {
+            renderPlayerSingleSoal(pKey, question);
+        }
     }
 
     function checkPlayerAnswer(pKey) {
@@ -1014,112 +1045,102 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!question || question.isComplete) return;
 
-        // Instant visual loading feedback
-        if (checkBtn) {
-            checkBtn.textContent = '⚡ MEMERIKSA...';
-            checkBtn.disabled = true;
-        }
-        feedbackEl.textContent = '⏳ Memeriksa jawaban...';
-        feedbackEl.className = 'feedback-msg neutral';
+        // Debounce: prevent rapid double-trigger
+        if (state[`${pKey}CheckPending`]) return;
+        state[`${pKey}CheckPending`] = true;
+        requestAnimationFrame(() => { state[`${pKey}CheckPending`] = false; });
 
-        setTimeout(() => {
-            if (checkBtn) {
-                checkBtn.textContent = '✔️ CEK JAWABAN';
-                checkBtn.disabled = false;
-            }
+        let isAllCorrect = false;
 
-            let isAllCorrect = false;
-
-            if (question.category === 'nilai_tempat') {
-                const unfilled = question.targetSlots.some(s => !s.filled);
-                if (unfilled) {
-                    AudioEngine.play('wrong');
-                    feedbackEl.textContent = '❌ Isilah semua kotak nilai tempat terlebih dahulu!';
-                    feedbackEl.className = 'feedback-msg wrong';
-                    return;
-                }
-
-                let correctCount = 0;
-                question.targetSlots.forEach(s => {
-                    if (s.filledDigit === s.expectedDigit) {
-                        s.status = 'correct';
-                        correctCount++;
-                    } else {
-                        s.status = 'wrong';
-                    }
-                });
-
-                isAllCorrect = (correctCount === question.targetSlots.length);
-            } else if (question.category === 'membandingkan') {
-                if (!question.selectedOp) {
-                    AudioEngine.play('wrong');
-                    feedbackEl.textContent = '⚠️ Pilih operator (> , < , =) terlebih dahulu!';
-                    feedbackEl.className = 'feedback-msg wrong';
-                    return;
-                }
-                isAllCorrect = (question.selectedOp === question.expectedOp);
-            } else if (question.category === 'mengurutkan') {
-                if (question.targetSlots.length < 3) {
-                    AudioEngine.play('wrong');
-                    feedbackEl.textContent = '⚠️ Susun ketiga bilangan ke dalam urutan #1, #2, dan #3!';
-                    feedbackEl.className = 'feedback-msg wrong';
-                    return;
-                }
-
-                // Robust BigInt comparison for Mengurutkan
-                const cleanTarget = question.targetSlots.map(v => BigInt(v.replace(/\D/g, '')));
-                const cleanExpected = (question.expectedSorted || []).map(v => BigInt(v.replace(/\D/g, '')));
-                isAllCorrect = cleanTarget.every((val, idx) => val === cleanExpected[idx]);
-            }
-
-            renderPlayerSingleSoal(pKey, question);
-
-            if (isAllCorrect) {
-                AudioEngine.play('correct');
-                question.isComplete = true;
-
-                const roundPoin = question.category === 'nilai_tempat' ? 100 * question.targetSlots.length : 300;
-                if (pKey === 'p1') {
-                    state.p1Score += roundPoin;
-                    dom.p1Score.textContent = state.p1Score;
-                } else {
-                    state.p2Score += roundPoin;
-                    dom.p2Score.textContent = state.p2Score;
-                }
-
-                const currentRound = pKey === 'p1' ? state.p1CurrentRound : state.p2CurrentRound;
-
-                if (currentRound < state.totalRounds) {
-                    if (pKey === 'p1') {
-                        state.p1CurrentRound++;
-                        state.p1Question = buildPlayerQuestionFromSeq('p1', state.p1CurrentRound - 1);
-                    } else {
-                        state.p2CurrentRound++;
-                        state.p2Question = buildPlayerQuestionFromSeq('p2', state.p2CurrentRound - 1);
-                    }
-
-                    feedbackEl.textContent = `🚀 BENAR! +${roundPoin} POIN! Otomatis lanjut ke RONDE ${currentRound + 1}...`;
-                    feedbackEl.className = 'feedback-msg correct';
-
-                    setTimeout(() => {
-                        feedbackEl.textContent = '';
-                        renderPlayerSingleSoal(pKey, pKey === 'p1' ? state.p1Question : state.p2Question);
-                    }, 400);
-                } else {
-                    if (pKey === 'p1') state.p1FinishedAll = true;
-                    else state.p2FinishedAll = true;
-
-                    feedbackEl.textContent = '🎉 BENAR! KAMU SUDAH MENYELESAIKAN SEMUA RONDE!';
-                    feedbackEl.className = 'feedback-msg correct';
-
-                    checkEndGame();
-                }
-            } else {
+        if (question.category === 'nilai_tempat') {
+            const unfilled = question.targetSlots.some(s => !s.filled);
+            if (unfilled) {
                 AudioEngine.play('wrong');
-                feedbackEl.textContent = '❌ Jawaban belum tepat, coba perbaiki pilihanmu!';
+                feedbackEl.textContent = '❌ Isilah semua kotak nilai tempat terlebih dahulu!';
                 feedbackEl.className = 'feedback-msg wrong';
+                return;
             }
-        }, 50);
+
+            let correctCount = 0;
+            question.targetSlots.forEach(s => {
+                if (s.filledDigit === s.expectedDigit) {
+                    s.status = 'correct';
+                    correctCount++;
+                } else {
+                    s.status = 'wrong';
+                }
+            });
+
+            isAllCorrect = (correctCount === question.targetSlots.length);
+        } else if (question.category === 'membandingkan') {
+            if (!question.selectedOp) {
+                AudioEngine.play('wrong');
+                feedbackEl.textContent = '⚠️ Pilih operator (> , < , =) terlebih dahulu!';
+                feedbackEl.className = 'feedback-msg wrong';
+                return;
+            }
+            isAllCorrect = (question.selectedOp === question.expectedOp);
+        } else if (question.category === 'mengurutkan') {
+            if (question.targetSlots.length < 3) {
+                AudioEngine.play('wrong');
+                feedbackEl.textContent = '⚠️ Susun ketiga bilangan ke dalam urutan #1, #2, dan #3!';
+                feedbackEl.className = 'feedback-msg wrong';
+                return;
+            }
+
+            // Robust BigInt comparison for Mengurutkan
+            const cleanTarget = question.targetSlots.map(v => BigInt(v.replace(/\D/g, '')));
+            const cleanExpected = (question.expectedSorted || []).map(v => BigInt(v.replace(/\D/g, '')));
+            isAllCorrect = cleanTarget.every((val, idx) => val === cleanExpected[idx]);
+        }
+
+        renderPlayerSingleSoal(pKey, question);
+
+        if (isAllCorrect) {
+            AudioEngine.play('correct');
+            question.isComplete = true;
+
+            const roundPoin = question.category === 'nilai_tempat' ? 100 * question.targetSlots.length : 300;
+            if (pKey === 'p1') {
+                state.p1Score += roundPoin;
+                dom.p1Score.textContent = state.p1Score;
+            } else {
+                state.p2Score += roundPoin;
+                dom.p2Score.textContent = state.p2Score;
+            }
+
+            const currentRound = pKey === 'p1' ? state.p1CurrentRound : state.p2CurrentRound;
+
+            if (currentRound < state.totalRounds) {
+                if (pKey === 'p1') {
+                    state.p1CurrentRound++;
+                    state.p1Question = buildPlayerQuestionFromSeq('p1', state.p1CurrentRound - 1);
+                } else {
+                    state.p2CurrentRound++;
+                    state.p2Question = buildPlayerQuestionFromSeq('p2', state.p2CurrentRound - 1);
+                }
+
+                feedbackEl.textContent = `🚀 BENAR! +${roundPoin} POIN! Lanjut RONDE ${currentRound + 1}!`;
+                feedbackEl.className = 'feedback-msg correct';
+
+                setTimeout(() => {
+                    feedbackEl.textContent = '';
+                    renderPlayerSingleSoal(pKey, pKey === 'p1' ? state.p1Question : state.p2Question);
+                }, 150);
+            } else {
+                if (pKey === 'p1') state.p1FinishedAll = true;
+                else state.p2FinishedAll = true;
+
+                feedbackEl.textContent = '🎉 BENAR! KAMU SUDAH MENYELESAIKAN SEMUA RONDE!';
+                feedbackEl.className = 'feedback-msg correct';
+
+                checkEndGame();
+            }
+        } else {
+            AudioEngine.play('wrong');
+            feedbackEl.textContent = '❌ Jawaban belum tepat, coba perbaiki pilihanmu!';
+            feedbackEl.className = 'feedback-msg wrong';
+        }
     }
 
     function checkEndGame() {
@@ -1160,7 +1181,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- TAB 2: MATERI GURU INTERAKTIF ENGINE ---
     function renderMateriTab() {
-        const rawDigitsClean = dom.materiNumInput.value.replace(/\D/g, '');
+        let rawDigitsClean = dom.materiNumInput.value.replace(/\D/g, '');
+        if (rawDigitsClean.length > 15) {
+            rawDigitsClean = rawDigitsClean.slice(0, 15);
+        }
         if (rawDigitsClean === '') {
             dom.materiNumInput.value = '';
             dom.materiWordsText.innerHTML = '<span style="color: #94a3b8; font-style: italic;">Silakan ketikkan angka di atas...</span>';
@@ -1244,6 +1268,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     dom.btnSpeakMateri.addEventListener('click', () => {
         if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
             const textToSpeak = dom.materiWordsText.textContent;
             const utterance = new SpeechSynthesisUtterance(textToSpeak);
             utterance.lang = 'id-ID';
@@ -1986,6 +2011,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (dom.btnSpeakCompare) {
         dom.btnSpeakCompare.addEventListener('click', () => {
             if ('speechSynthesis' in window && dom.compareVerdictBanner) {
+                window.speechSynthesis.cancel();
                 const textToSpeak = dom.compareVerdictBanner.textContent;
                 const utterance = new SpeechSynthesisUtterance(textToSpeak);
                 utterance.lang = 'id-ID';
@@ -2120,23 +2146,19 @@ document.addEventListener('DOMContentLoaded', () => {
         dom.btnPracticeSortReset.addEventListener('click', resetPracticeSortBoard);
     }
 
-    // --- BATTLE CHECK ANSWER LISTENERS FOR SIMULTANEOUS 2-PLAYER SPEED RACE ---
+    // --- BATTLE CHECK ANSWER LISTENERS (SINGLE REGISTRATION, NO DUPLICATES) ---
     if (dom.p1BtnCheck) {
-        const triggerCheckP1 = (e) => {
+        dom.p1BtnCheck.addEventListener('click', (e) => {
             if (e) { e.preventDefault(); e.stopPropagation(); }
             checkPlayerAnswer('p1');
-        };
-        dom.p1BtnCheck.addEventListener('pointerdown', triggerCheckP1);
-        dom.p1BtnCheck.addEventListener('click', triggerCheckP1);
+        });
     }
 
     if (dom.p2BtnCheck) {
-        const triggerCheckP2 = (e) => {
+        dom.p2BtnCheck.addEventListener('click', (e) => {
             if (e) { e.preventDefault(); e.stopPropagation(); }
             checkPlayerAnswer('p2');
-        };
-        dom.p2BtnCheck.addEventListener('pointerdown', triggerCheckP2);
-        dom.p2BtnCheck.addEventListener('click', triggerCheckP2);
+        });
     }
 
     if (dom.catBtns) {
@@ -2212,18 +2234,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- START BATTLE LISTENERS ---
-    if (dom.p1BtnCheck) {
-        dom.p1BtnCheck.addEventListener('click', () => {
-            checkPlayerAnswer('p1');
+    // Auto-scroll input into view on focus inside modals (Mobile UX)
+    document.querySelectorAll('.modal-card input').forEach(inputEl => {
+        inputEl.addEventListener('focus', () => {
+            setTimeout(() => {
+                inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
         });
-    }
-
-    if (dom.p2BtnCheck) {
-        dom.p2BtnCheck.addEventListener('click', () => {
-            checkPlayerAnswer('p2');
-        });
-    }
+    });
 
     dom.btnStartGame.addEventListener('click', () => {
         state.p1Name = dom.p1NameInput.value.trim() || 'Budi';
